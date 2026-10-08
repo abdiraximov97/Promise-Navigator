@@ -1,0 +1,106 @@
+package util;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+public class InputHelper {
+
+    private final Scanner scanner;
+
+    public InputHelper(Scanner scanner) {
+        this.scanner = scanner;
+    }
+
+    public int readInt(String message) {
+        while (true) {
+            System.out.print(message);
+            try {
+                int number = scanner.nextInt();
+                scanner.nextLine();
+                return number;
+            } catch (InputMismatchException e) {
+                scanner.nextLine();
+                System.out.println(
+                        "Xatolik: faqat son kiriting."
+                );
+            }
+        }
+    }
+
+    public String readRequiredString(String message) {
+        while (true) {
+            System.out.print(message);
+            String value = scanner.nextLine();
+            if(value.isBlank()) {
+                System.out.println("Xatolik, qiymat bo'sh bo'lishi mumkin emas");
+                continue;
+            }
+            return value;
+        }
+    }
+
+    public LocalDateTime readDeadline(String message) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+        while (true) {
+            System.out.print(message);
+            String dedlineInput = scanner.nextLine();
+
+            if(dedlineInput.isBlank()) {
+                System.out.println("Xatolik, deadline bo'sh bo'lmasligi kerak");
+                continue;
+            }
+            try {
+                LocalDateTime deadline = LocalDateTime.parse(dedlineInput, formatter);
+                if(deadline.isBefore(LocalDateTime.now())) {
+                    System.out.println("Xatolik: deadline vaqti o'tgan bo'lishi mumkin emas");
+                    continue;
+                }
+                return deadline;
+            } catch (DateTimeParseException e) {
+                System.out.println("Xatolik: faqat yyy.MM.dd HH:mm formatida kiriting.");
+                System.out.println("Masalan: 2023.10.07 12:30");
+            }
+        }
+    }
+
+    public String readOptionalString(String message) {
+        System.out.println(message);
+        return scanner.nextLine();
+    }
+
+    public LocalDateTime readOptionalDeadline(String message) {
+
+        DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
+
+        while (true) {
+
+            System.out.print(message);
+            String deadlineInput = scanner.nextLine();
+
+            if (deadlineInput.isBlank()) {
+                return null;
+            }
+
+            try {
+                LocalDateTime deadline =
+                        LocalDateTime.parse(
+                                deadlineInput,
+                                formatter
+                        );
+                if (deadline.isBefore(LocalDateTime.now())) {
+                    System.out.println("Xatolik: Deadline o'tgan vaqt bo'lishi mumkin emas.");
+                    continue;
+                }
+                return deadline;
+            } catch (DateTimeParseException e) {
+
+                System.out.println("Xatolik: Deadline formati noto'g'ri.");
+                System.out.println("Masalan: 2026.10.10 18:30");
+            }
+        }
+    }
+}
