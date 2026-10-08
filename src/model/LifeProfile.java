@@ -64,7 +64,6 @@ public void addPromise(Promise promise) {
             }
 //            Dedline berilgan bo'lsa o'zgartiramiz
             if(newDeadline != null) {
-                promise.setDeadline(newDeadline);
                 promise.updateDeadline(newDeadline);
             }
 
