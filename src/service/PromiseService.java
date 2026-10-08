@@ -3,6 +3,7 @@ package service;
 import model.LifeProfile;
 import model.Promise;
 import model.PromiseCategory;
+import model.PromiseStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -28,6 +29,10 @@ public class PromiseService {
 
     public List<Promise> findPromisesByCategory(PromiseCategory category) {
         return profile.findPromisesByCategory(category);
+    }
+
+    public List<Promise> findPromisesByStatus(PromiseStatus status) {
+        return profile.findPromisesByStatus(status);
     }
 
     public Promise findPromise(String title) {

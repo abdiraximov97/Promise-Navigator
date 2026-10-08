@@ -3,6 +3,8 @@ import model.LifeProfile;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
+
+import model.PromiseStatus;
 import service.PromiseService;
 import util.InputHelper;
 import model.PromiseCategory;
@@ -50,7 +52,8 @@ public class Main {
             System.out.println("5. Vazifani o'chirish");
             System.out.println("6. Vazifani o'zgartirish");
             System.out.println("7. Vazifani qo'shish");
-            System.out.println("8. Kategoriyalarni bo'yicha ko'rsatish");
+            System.out.println("8. Kategoriyalar bo'yicha ko'rsatish");
+            System.out.println("9. Status bo'yicha ko'rsatish");
             System.out.println("0. Chiqish");
 
             String choice = input.readRequiredString("Tanlang: ");
@@ -80,9 +83,11 @@ public class Main {
                 case "7": //Vazifani qo'shish
                     addPromise(service, input);
                     break;
-
                 case "8": //Kategoriya bo'yicha ko'rish
                     showPromisesByCategory(service, input);
+                    break;
+                case "9": //Status bo'yicha ko'rish
+                    showProsimeByStatus(service, input);
                     break;
                 default: System.out.println("Noto'g'ri tanlov (0 - 7) oralig'ida tanlang");
             }
@@ -201,6 +206,24 @@ public class Main {
                     " | " + "Deadline: " + promise.getDeadline() +
                     " | " + "Status: " + promise.getStatus());
 
+        }
+    }
+
+    private static void showProsimeByStatus(PromiseService service, InputHelper input) {
+        PromiseStatus status = input.readStatus("Qaysi status malumotlarini korishni xohlaysiz? ");
+        List<Promise> promises = service.findPromisesByStatus(status);
+        if(promises.isEmpty()) {
+            System.out.println("Bu statusda vazifalar mavjud emas");
+            return;
+        }
+        System.out.println("============== " + status + " vazifalari ==============");
+        for (Promise promise : promises) {
+            System.out.println("ID: " + promise.getId() +
+                    " | " + "Nomi: " + promise.getTitle() +
+                    " | " + "Izoh: " + promise.getDescription() +
+                    " | " + "Kategoriya: " + promise.getCategory() +
+                    " | " + "Deadline: " + promise.getDeadline() +
+                    " | " + "Status: " + promise.getStatus());
         }
     }
 }

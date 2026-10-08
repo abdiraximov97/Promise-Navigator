@@ -58,20 +58,20 @@ public class Promise {
 
     // Vadani "Jarayonda" holatiga o'tqazadi
     public boolean start() {
-        if(status == PromiseStatus.PENDING) {
-            this.status = PromiseStatus.IN_PROGRESS;
-            return true;
+        if(status != PromiseStatus.PENDING) {
+            return false;
         }
-        return false;
+        this.status = PromiseStatus.IN_PROGRESS;
+        return true;
     }
 
     // Vadani "Bajarildi" holatiga o'tqazadi
     public boolean complete() {
-        if(status == PromiseStatus.IN_PROGRESS) {
-            this.status = PromiseStatus.COMPLETED;
-            return true;
+        if(status != PromiseStatus.IN_PROGRESS) {
+            return false;
         }
-        return false;
+        this.status = PromiseStatus.COMPLETED;
+        return true;
     }
 
     // vadani "Bekor qilindi" holatiga o'tqazadi
@@ -92,14 +92,15 @@ public class Promise {
     public boolean isOverdue() {
 //        Vazifani muddati o'tib ketgan va vazifa hali bajarilmagan va vazifa bekor qilinmagan (true)
 //        unday bo'lmasa (false) qiymat qaytaradi.
-        return  status != PromiseStatus.COMPLETED || status != PromiseStatus.CANCELLED && deadline.isBefore(LocalDateTime.now());
+        return  status
+                == PromiseStatus.PENDING
+                || status == PromiseStatus.IN_PROGRESS
+                && deadline.isBefore(LocalDateTime.now());
     }
 
     public void checkOverdue() {
         if(isOverdue()) {
-            if(deadline.isBefore(LocalDateTime.now())) {
-                status = PromiseStatus.OVERDUE;
-            }
+            status = PromiseStatus.OVERDUE;
         }
     }
 

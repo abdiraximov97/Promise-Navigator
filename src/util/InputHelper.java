@@ -1,11 +1,13 @@
 package util;
 
+import model.Promise;
 import model.PromiseCategory;
-
+import model.PromiseStatus;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 public class InputHelper {
@@ -100,6 +102,28 @@ public class InputHelper {
                     System.out.println(
                             "Xatolik: 1-5 oralig'ida tanlang."
                     );
+            }
+        }
+    }
+
+    public PromiseStatus readStatus(String message) {
+        while (true) {
+            System.out.println(message);
+            System.out.println("1. Kutilmoqda");
+            System.out.println("2. Jarayonda");
+            System.out.println("3. Bajarildi");
+            System.out.println("4. Muddati o'tgan");
+            System.out.println("5. Bekor qilingan");
+
+            int choice = readInt("Tanlang: ");
+            switch (choice) {
+                case 1: return PromiseStatus.PENDING;
+                case 2: return PromiseStatus.IN_PROGRESS;
+                case 3: return PromiseStatus.COMPLETED;
+                case 4: return PromiseStatus.OVERDUE;
+                case 5: return PromiseStatus.CANCELLED;
+                default:
+                    System.out.println("Xatolik, 1-5 orasida son tanlang");
             }
         }
     }

@@ -28,6 +28,16 @@ public class LifeProfile {
         return Collections.unmodifiableList(promises);
     }
 
+    public List<Promise> findPromisesByStatus(PromiseStatus status) {
+        List<Promise> result = new ArrayList<>();
+        for(Promise promise : promises) {
+            if(promise.getStatus() == status) {
+                result.add(promise);
+            }
+        }
+        return result;
+    }
+
     public List<Promise> findPromisesByCategory(PromiseCategory category) {
 
         List<Promise> result = new ArrayList<>();
