@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Collection;
 
 public class LifeProfile {
     private String name;
@@ -16,10 +15,6 @@ public class LifeProfile {
 
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
 public void addPromise(Promise promise) {
