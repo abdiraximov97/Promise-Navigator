@@ -35,15 +35,6 @@ public class PromiseService {
         return profile.findPromisesByStatus(status);
     }
 
-    public Promise findPromise(String title) {
-        for (Promise promise : profile.getPromises()) {
-            if (promise.getTitle().equalsIgnoreCase(title)) {
-                    return promise;
-            }
-        }
-        return null;
-    }
-
     public Promise findPromiseById(int id) {
         return profile.findPromiseById(id);
     }

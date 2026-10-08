@@ -1,7 +1,6 @@
 
 package model;
 import java.time.LocalDateTime;
-import java.util.Locale;
 
 public class Promise {
     private static int nextId = 1;
@@ -37,7 +36,7 @@ public class Promise {
     }
 
 //    deadline larni tekshirish
-    public void validateDeadline(LocalDateTime deadline) {
+    private void validateDeadline(LocalDateTime deadline) {
         if(deadline == null) {
             throw new IllegalArgumentException("Dedline 'null' bo'lishi mumkin emas.");
         }
@@ -129,14 +128,14 @@ public class Promise {
     }
 
     public void updateTitle(String title) {
-        if(title == null && title.isBlank()) {
+        if(title == null || title.isBlank()) {
             throw new IllegalArgumentException("Vazifa nomi bo'sh bo'lishi mumkin emas");
         }
         this.title = title;
     }
 
     public void updateDescription(String description) {
-        if(description == null && description.isBlank()) {
+        if(description == null || description.isBlank()) {
             throw new IllegalArgumentException("Vazifa izohi bo'sh bo'lishi mumkin emas");
         }
         this.description = description;
@@ -159,6 +158,7 @@ public class Promise {
                 ", description='" + description + '\'' +
                 ", deadline=" + deadline +
                 ", status=" + status +
+                ", category=" + category +
                 '}';
     }
 }

@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class LifeProfile {
-    private String name;
-    private List<Promise> promises = new ArrayList<>();
+    private final String name;
+    private final List<Promise> promises = new ArrayList<>();
 
     public LifeProfile(String name) {
         this.name = name;
@@ -29,6 +29,9 @@ public class LifeProfile {
     }
 
     public List<Promise> findPromisesByStatus(PromiseStatus status) {
+        if(status == null) {
+            throw new IllegalArgumentException("Vazifa statusi null bo'lishi mumkin emas.");
+        }
         List<Promise> result = new ArrayList<>();
         for(Promise promise : promises) {
             if(promise.getStatus() == status) {
@@ -39,7 +42,9 @@ public class LifeProfile {
     }
 
     public List<Promise> findPromisesByCategory(PromiseCategory category) {
-
+        if(category == null) {
+            throw new IllegalArgumentException("Vazifa kategoriyasi null bo'lishi mumkin emas.");
+        }
         List<Promise> result = new ArrayList<>();
 
         for (Promise promise : promises) {
