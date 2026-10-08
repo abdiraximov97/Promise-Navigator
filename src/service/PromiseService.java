@@ -2,6 +2,7 @@
 package service;
 import model.LifeProfile;
 import model.Promise;
+import model.PromiseCategory;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -25,6 +26,10 @@ public class PromiseService {
         return profile.getPromises();
     }
 
+    public List<Promise> findPromisesByCategory(PromiseCategory category) {
+        return profile.findPromisesByCategory(category);
+    }
+
     public Promise findPromise(String title) {
         for (Promise promise : profile.getPromises()) {
             if (promise.getTitle().equalsIgnoreCase(title)) {
@@ -42,8 +47,13 @@ public class PromiseService {
         return profile.removePromise(id);
     }
 
-    public boolean updatePromise(int id, String newTitle, String newDescription, LocalDateTime newDeadline) {
-        return profile.updatePromise(id, newTitle, newDescription, newDeadline);
+    public boolean updatePromise(
+                                int id,
+                                String newTitle,
+                                String newDescription,
+                                LocalDateTime newDeadline,
+                                PromiseCategory newCategory) {
+        return profile.updatePromise(id, newTitle, newDescription, newDeadline, newCategory);
     }
 
     public boolean startPromise(int id) {
@@ -67,9 +77,7 @@ public class PromiseService {
         }
         return false;
     }
-
-
-   public void startOverdueChecker() {
+    public void startOverdueChecker() {
         scheduler.scheduleAtFixedRate(() -> {
             for (Promise promise : profile.getPromises()) {
                 promise.checkOverdue();
@@ -77,7 +85,7 @@ public class PromiseService {
         }, 0, 1, TimeUnit.SECONDS);
    }
 
-   public void stopOverdueChecker() {
+    public void stopOverdueChecker() {
         scheduler.shutdown();
    }
 }

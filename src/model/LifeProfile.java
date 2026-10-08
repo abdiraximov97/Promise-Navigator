@@ -17,7 +17,7 @@ public class LifeProfile {
         return name;
     }
 
-public void addPromise(Promise promise) {
+    public void addPromise(Promise promise) {
     if(promise == null) {
         throw new IllegalArgumentException("Vazifa 'null' bo'lishi mumkin emas.");
     }
@@ -26,6 +26,18 @@ public void addPromise(Promise promise) {
 
     public List<Promise> getPromises() {
         return Collections.unmodifiableList(promises);
+    }
+
+    public List<Promise> findPromisesByCategory(PromiseCategory category) {
+
+        List<Promise> result = new ArrayList<>();
+
+        for (Promise promise : promises) {
+            if (promise.getCategory() == category) {
+                result.add(promise);
+            }
+        }
+        return result;
     }
 
     public Promise findPromiseById(int id) {
@@ -46,7 +58,7 @@ public void addPromise(Promise promise) {
         return null;
     }
 
-    public boolean updatePromise(int id, String newTitle, String newDescription, LocalDateTime newDeadline) {
+    public boolean updatePromise(int id, String newTitle, String newDescription, LocalDateTime newDeadline, PromiseCategory newCategory) {
         Promise promise = findPromiseById(id);
         if(promise != null) {
 //            Yangi nom bo'sh bo'lmasa o'zgartiramiz
@@ -60,6 +72,10 @@ public void addPromise(Promise promise) {
 //            Dedline berilgan bo'lsa o'zgartiramiz
             if(newDeadline != null) {
                 promise.updateDeadline(newDeadline);
+            }
+//            Kategoriya berilgan bo'lsa o'zgartiramiz
+            if(newCategory != null) {
+                promise.updateCategory(newCategory);
             }
 
             return true;

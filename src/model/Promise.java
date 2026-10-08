@@ -115,6 +115,10 @@ public class Promise {
         return description;
     }
 
+    public PromiseCategory getCategory() {
+        return category;
+    }
+
     public LocalDateTime getDeadline() {
         return deadline;
     }
@@ -135,6 +139,13 @@ public class Promise {
             throw new IllegalArgumentException("Vazifa izohi bo'sh bo'lishi mumkin emas");
         }
         this.description = description;
+    }
+
+    public void updateCategory(PromiseCategory category) {
+        if(category == null) {
+            throw new IllegalArgumentException("Vazifa turi null bo'lishi mumkin emas.");
+        }
+        this.category = category;
     }
 
 

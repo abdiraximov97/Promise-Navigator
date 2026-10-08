@@ -16,20 +16,20 @@ public class Main {
         var promise1 = new Promise(
                 "kitob o'qish",
                 "10 sahifa",
-                LocalDateTime.of(2026,10,12, 18, 30)
+                LocalDateTime.of(2026,10,12, 18, 30),
                 PromiseCategory.STUDY);
 
         var promise2 = new Promise(
                 "darslarni qilish",
                 "OOP ni o'rganish",
-                LocalDateTime.of(2026, 10, 10, 8, 30)
+                LocalDateTime.of(2026, 10, 10, 8, 30),
                 PromiseCategory.STUDY);
 
         var promise3 = new Promise(
                 "Bozorga borish",
                 "Atir olish kerak",
-                LocalDateTime.of(2026, 10, 13, 10, 0)
-                PromiseCategory.STUDY);
+                LocalDateTime.of(2026, 10, 13, 10, 0),
+                PromiseCategory.OTHER);
 
 
         var service = new PromiseService(profile);
@@ -50,6 +50,7 @@ public class Main {
             System.out.println("5. Vazifani o'chirish");
             System.out.println("6. Vazifani o'zgartirish");
             System.out.println("7. Vazifani qo'shish");
+            System.out.println("8. Kategoriyalarni bo'yicha ko'rsatish");
             System.out.println("0. Chiqish");
 
             String choice = input.readRequiredString("Tanlang: ");
@@ -79,6 +80,10 @@ public class Main {
                 case "7": //Vazifani qo'shish
                     addPromise(service, input);
                     break;
+
+                case "8": //Kategoriya bo'yicha ko'rish
+                    showPromisesByCategory(service, input);
+                    break;
                 default: System.out.println("Noto'g'ri tanlov (0 - 7) oralig'ida tanlang");
             }
 
@@ -97,9 +102,9 @@ public class Main {
                         "ID: " + promise.getId() +
                                 " | " + "Nomi: " + promise.getTitle() +
                                 " | " + "Izoh: " + promise.getDescription() +
+                                " | " + "Category: " + promise.getCategory() +
                                 " | " + "Deadline: " + promise.getDeadline() +
-                                " | " + "Status: " + promise.getStatus() +
-                                " | " + "Category: " + promise.getCategory()
+                                " | " + "Status: " + promise.getStatus()
                 );
             }
         }
@@ -153,7 +158,8 @@ public class Main {
         String newTitle = input.readOptionalString("Vazifaning yangi nomi, o'zgartirmasangiz [Enter] ni bosing: ");
         String newDescription = input.readOptionalString("Vazifa uchun yangi izoh, o'zgartirmasangiz [Enter] ni bosing: ");
         LocalDateTime newDeadline = input.readOptionalDeadline("Yangi deadline, O'zgartirmasangiz [Enter] ni bosing: ");
-        boolean updated = service.updatePromise(updateId, newTitle, newDescription, newDeadline);
+        PromiseCategory newCategory = input.readCategory("Yangi kategoriya, O'zgartirmasangiz [Enter] ni bosing: ");
+        boolean updated = service.updatePromise(updateId, newTitle, newDescription, newDeadline, newCategory);
         if (updated) {
             System.out.println("Vazifa muvaffaqiyatli o'zgartirildi.");
         } else {
@@ -167,15 +173,34 @@ public class Main {
             String title = input.readRequiredString("Vazifa nomini kiriting: ");
             String description = input.readRequiredString("Izohni kiriting: ");
             LocalDateTime deadline = input.readDeadline("Deadline: ");
+            PromiseCategory category = input.readCategory("Vazifa turi: ");
 
-
-            Promise promise = new Promise(title, description, deadline);
+            Promise promise = new Promise(title, description, deadline, category);
             service.addPromise(promise);
             System.out.println("Vazifa muvaffaqiyatli qo'shildi.");
         }
 
         catch (IllegalArgumentException e) {
             System.out.println("Xatolik: " + e.getMessage());
+        }
+    }
+
+    private static void showPromisesByCategory(PromiseService service, InputHelper input) {
+        PromiseCategory category = input.readCategory("Qaysi kategoriyani ko'rishni xohlaysiz?");
+        List<Promise> promises = service.findPromisesByCategory(category);
+        if(promises.isEmpty()) {
+            System.out.println("Bu kategoriyada vazifa mavjud emas.");
+            return;
+        }
+        System.out.println("=============" + category + " Vazifalari =============");
+        for (Promise promise : promises) {
+            System.out.println("ID: " + promise.getId() +
+                    " | " + "Nomi: " + promise.getTitle() +
+                    " | " + "Izoh: " + promise.getDescription() +
+                    " | " + "Kategoriya: " + promise.getCategory() +
+                    " | " + "Deadline: " + promise.getDeadline() +
+                    " | " + "Status: " + promise.getStatus());
+
         }
     }
 }
