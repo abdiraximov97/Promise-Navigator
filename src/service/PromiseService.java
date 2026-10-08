@@ -42,12 +42,7 @@ public class PromiseService {
         return profile.removePromise(id);
     }
 
-
-    public boolean updatePromise(
-                int id,
-                String newTitle,
-                String newDescription,
-                LocalDateTime newDeadline) {
+    public boolean updatePromise(int id, String newTitle, String newDescription, LocalDateTime newDeadline) {
         return profile.updatePromise(id, newTitle, newDescription, newDeadline);
     }
 

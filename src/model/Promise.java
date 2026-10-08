@@ -10,14 +10,20 @@ public class Promise {
     private String description;
     private LocalDateTime deadline;
     private PromiseStatus status;
+    private PromiseCategory category;
 
     // Constructor funksiya
-    public Promise(String title, String description, LocalDateTime deadline) {
+    public Promise(String title, String description, LocalDateTime deadline, PromiseCategory category) {
         if(title == null || title.isBlank()) {
             throw new IllegalArgumentException("Vazifani nomi bo'sh bo'lishi mumkin emas.");
         }
         if(description == null || description.isBlank()) {
             throw new IllegalArgumentException("Vazifa uchun izoh bo'sh bo'lishi mumkin emas.");
+        }
+        if (category == null) {
+            throw new IllegalArgumentException(
+                    "Vazifa kategoriyasi null bo'lishi mumkin emas."
+            );
         }
 
         validateDeadline(deadline);
@@ -27,6 +33,7 @@ public class Promise {
         this.description = description.toLowerCase();
         this.deadline = deadline;
         this.status = PromiseStatus.PENDING;
+        this.category = category;
     }
 
 //    deadline larni tekshirish

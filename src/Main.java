@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Scanner;
 import service.PromiseService;
 import util.InputHelper;
+import model.PromiseCategory;
 
 public class Main {
     public static void main(String[] args) {
@@ -15,19 +16,20 @@ public class Main {
         var promise1 = new Promise(
                 "kitob o'qish",
                 "10 sahifa",
-                LocalDateTime.of(2026,10,12, 18, 30));
+                LocalDateTime.of(2026,10,12, 18, 30)
+                PromiseCategory.STUDY);
 
         var promise2 = new Promise(
                 "darslarni qilish",
                 "OOP ni o'rganish",
                 LocalDateTime.of(2026, 10, 10, 8, 30)
-        );
+                PromiseCategory.STUDY);
 
         var promise3 = new Promise(
                 "Bozorga borish",
                 "Atir olish kerak",
                 LocalDateTime.of(2026, 10, 13, 10, 0)
-        );
+                PromiseCategory.STUDY);
 
 
         var service = new PromiseService(profile);
@@ -96,7 +98,8 @@ public class Main {
                                 " | " + "Nomi: " + promise.getTitle() +
                                 " | " + "Izoh: " + promise.getDescription() +
                                 " | " + "Deadline: " + promise.getDeadline() +
-                                " | " + "Status: " + promise.getStatus()
+                                " | " + "Status: " + promise.getStatus() +
+                                " | " + "Category: " + promise.getCategory()
                 );
             }
         }

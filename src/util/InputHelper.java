@@ -1,5 +1,7 @@
 package util;
 
+import model.PromiseCategory;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -62,6 +64,42 @@ public class InputHelper {
             } catch (DateTimeParseException e) {
                 System.out.println("Xatolik: faqat yyy.MM.dd HH:mm formatida kiriting.");
                 System.out.println("Masalan: 2023.10.07 12:30");
+            }
+        }
+    }
+
+    public PromiseCategory readCategory(String message) {
+        while (true) {
+            System.out.println(message);
+            System.out.println("1. O'qish");
+            System.out.println("2. Ish");
+            System.out.println("3. Sog'liq");
+            System.out.println("4. Shaxsiy");
+            System.out.println("5. Boshqa");
+
+            int choice = readInt("Tanlang: ");
+
+            switch (choice) {
+
+                case 1:
+                    return PromiseCategory.STUDY;
+
+                case 2:
+                    return PromiseCategory.WORK;
+
+                case 3:
+                    return PromiseCategory.HEALTH;
+
+                case 4:
+                    return PromiseCategory.PERSONAL;
+
+                case 5:
+                    return PromiseCategory.OTHER;
+
+                default:
+                    System.out.println(
+                            "Xatolik: 1-5 oralig'ida tanlang."
+                    );
             }
         }
     }
