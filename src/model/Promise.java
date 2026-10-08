@@ -40,6 +40,15 @@ public class Promise {
         }
     }
 
+    public boolean updateDeadline(LocalDateTime newdeadline) {
+        validateDeadline(newdeadline);
+        this.deadline = newdeadline;
+        if(status == PromiseStatus.OVERDUE) {
+            status = PromiseStatus.PENDING;
+        }
+        return true;
+    }
+
     // Vadani "Jarayonda" holatiga o'tqazadi
     public boolean start() {
         if(status == PromiseStatus.PENDING) {
@@ -76,11 +85,11 @@ public class Promise {
     public boolean isOverdue() {
 //        Vazifani muddati o'tib ketgan va vazifa hali bajarilmagan va vazifa bekor qilinmagan (true)
 //        unday bo'lmasa (false) qiymat qaytaradi.
-        return deadline.isBefore(LocalDateTime.now()) && status != PromiseStatus.COMPLETED && status != PromiseStatus.CANCELLED;
+        return  status != PromiseStatus.COMPLETED || status != PromiseStatus.CANCELLED && deadline.isBefore(LocalDateTime.now());
     }
 
     public void checkOverdue() {
-        if(status == PromiseStatus.PENDING || status == PromiseStatus.IN_PROGRESS) {
+        if(isOverdue()) {
             if(deadline.isBefore(LocalDateTime.now())) {
                 status = PromiseStatus.OVERDUE;
             }
@@ -107,20 +116,17 @@ public class Promise {
         return status;
     }
 
-    public void setDeadline(LocalDateTime deadline) {
-        validateDeadline(deadline);
-        this.deadline = deadline;
-    }
-
-    public void setStatus(PromiseStatus status) {
-        this.status = status;
-    }
-
-    public void setTitle(String title) {
+    public void updateTitle(String title) {
+        if(title == null && title.isBlank()) {
+            throw new IllegalArgumentException("Vazifa nomi bo'sh bo'lishi mumkin emas");
+        }
         this.title = title;
     }
 
-    public void setDescription(String description) {
+    public void updateDescription(String description) {
+        if(description == null && description.isBlank()) {
+            throw new IllegalArgumentException("Vazifa izohi bo'sh bo'lishi mumkin emas");
+        }
         this.description = description;
     }
 

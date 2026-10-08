@@ -56,18 +56,16 @@ public void addPromise(Promise promise) {
         if(promise != null) {
 //            Yangi nom bo'sh bo'lmasa o'zgartiramiz
             if(newTitle != null && !newTitle.isBlank()) {
-                promise.setTitle(newTitle);
+                promise.updateTitle(newTitle);
             }
 //            Yangi izoh bo'sh bo'lmasa o'zgartiramiz
             if(newDescription != null && !newDescription.isBlank()) {
-                promise.setDescription(newDescription);
+                promise.updateDescription(newDescription);
             }
 //            Dedline berilgan bo'lsa o'zgartiramiz
             if(newDeadline != null) {
                 promise.setDeadline(newDeadline);
-                if(promise.getStatus() == PromiseStatus.OVERDUE) {
-                    promise.setStatus(PromiseStatus.PENDING);
-                }
+                promise.updateDeadline(newDeadline);
             }
 
             return true;
