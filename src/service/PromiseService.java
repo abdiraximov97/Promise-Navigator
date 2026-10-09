@@ -5,6 +5,7 @@ import model.Promise;
 import model.PromiseCategory;
 import model.PromiseStatus;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -73,16 +74,42 @@ public class PromiseService {
         }
         return false;
     }
+    public void chescOverduePromise(){
+        for(Promise promise : profile.getPromises()) {
+            promise.checkOverdue();
+        }
+    }
     public void startOverdueChecker() {
         scheduler.scheduleAtFixedRate(() -> {
-            for (Promise promise : profile.getPromises()) {
-                promise.checkOverdue();
-            }
+            chescOverduePromise();
         }, 0, 1, TimeUnit.SECONDS);
    }
-
     public void stopOverdueChecker() {
         scheduler.shutdown();
+   }
+    public int countPromisesByStatus(PromiseStatus status) {
+        int count = 0;
+        for(Promise promise : profile.getPromises()) {
+            promise.checkOverdue();
+            if(promise.getStatus() == status) {
+                count++;
+            }
+        }
+        return count;
+   }
+    public List<Promise> getUpcomingPromise() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime next24Hours = now.plusHours(24);
+        List<Promise> upcoming = new ArrayList<>();
+        for(Promise promise : profile.getPromises()) {
+            promise.checkOverdue();
+            if ((promise.getStatus() == PromiseStatus.PENDING
+                    || promise.getStatus() == PromiseStatus.IN_PROGRESS)
+                    && !promise.getDeadline().isBefore(now)
+                    && !promise.getDeadline().isAfter(next24Hours))
+               upcoming.add(promise);
+        }
+        return upcoming;
    }
 }
 

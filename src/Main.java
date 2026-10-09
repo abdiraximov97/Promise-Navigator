@@ -3,7 +3,6 @@ import model.LifeProfile;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
-
 import model.PromiseStatus;
 import service.PromiseService;
 import util.InputHelper;
@@ -32,12 +31,40 @@ public class Main {
                 "Atir olish kerak",
                 LocalDateTime.of(2026, 10, 13, 10, 0),
                 PromiseCategory.OTHER);
+        var promise4 = new Promise(
+                "Test",
+                "Overdue test",
+                LocalDateTime.now().plusSeconds(10),
+                PromiseCategory.STUDY
+        );
 
+//        Promise testPromise = new Promise(
+//                "Test vazifa",
+//                "Statuslarni tekshirish",
+//                LocalDateTime.of(2026, 10, 20, 18, 0),
+//                PromiseCategory.STUDY
+//        );
+//
+//        System.out.println("Boshlang'ich: " + testPromise.getStatus());
+//
+//        System.out.println("Complete: " + testPromise.complete());
+//        System.out.println("Status: " + testPromise.getStatus());
+//
+//        System.out.println("Start: " + testPromise.start());
+//        System.out.println("Status: " + testPromise.getStatus());
+//
+//        System.out.println("Complete: " + testPromise.complete());
+//        System.out.println("Status: " + testPromise.getStatus());
+//
+//        System.out.println("Cancel: " + testPromise.cancel());
+//        System.out.println("Status: " + testPromise.getStatus());
 
         var service = new PromiseService(profile);
         service.addPromise(promise1);
         service.addPromise(promise2);
         service.addPromise(promise3);
+        service.addPromise(promise4);
+//        service.addPromise(testPromise);
 
 //      Avtomatik overdue ni ishga tushirish
         service.startOverdueChecker();
@@ -54,6 +81,8 @@ public class Main {
             System.out.println("7. Vazifani qo'shish");
             System.out.println("8. Kategoriyalar bo'yicha ko'rsatish");
             System.out.println("9. Status bo'yicha ko'rsatish");
+            System.out.println("10. Dashboard / Statistika");
+            System.out.println("11. Deadline yaqinlashayotgan vazifalar");
             System.out.println("0. Chiqish");
 
             String choice = input.readRequiredString("Tanlang: ");
@@ -87,9 +116,15 @@ public class Main {
                     showPromisesByCategory(service, input);
                     break;
                 case "9": //Status bo'yicha ko'rish
-                    showProsimeByStatus(service, input);
+                    showPromiseByStatus(service, input);
                     break;
-                default: System.out.println("Noto'g'ri tanlov (0 - 7) oralig'ida tanlang");
+                case "10": //Statistika
+                    showDashboard(service);
+                    break;
+                case "11": //YAqinlashayotgan dedlinelarni ko'rish
+                    showUpcomingPromises(service);
+                    break;
+                default: System.out.println("Noto'g'ri tanlov (0 - 9) oralig'ida tanlang");
             }
 
         }
@@ -163,7 +198,7 @@ public class Main {
         String newTitle = input.readOptionalString("Vazifaning yangi nomi, o'zgartirmasangiz [Enter] ni bosing: ");
         String newDescription = input.readOptionalString("Vazifa uchun yangi izoh, o'zgartirmasangiz [Enter] ni bosing: ");
         LocalDateTime newDeadline = input.readOptionalDeadline("Yangi deadline, O'zgartirmasangiz [Enter] ni bosing: ");
-        PromiseCategory newCategory = input.readCategory("Yangi kategoriya, O'zgartirmasangiz [Enter] ni bosing: ");
+        PromiseCategory newCategory = input.readOptionalCategory("Yangi kategoriya, O'zgartirmasangiz [Enter] ni bosing: ");
         boolean updated = service.updatePromise(updateId, newTitle, newDescription, newDeadline, newCategory);
         if (updated) {
             System.out.println("Vazifa muvaffaqiyatli o'zgartirildi.");
@@ -191,7 +226,7 @@ public class Main {
     }
 
     private static void showPromisesByCategory(PromiseService service, InputHelper input) {
-        PromiseCategory category = input.readCategory("Qaysi kategoriyani ko'rishni xohlaysiz?");
+        PromiseCategory category = input.readOptionalCategory("Qaysi kategoriyani ko'rishni xohlaysiz?");
         List<Promise> promises = service.findPromisesByCategory(category);
         if(promises.isEmpty()) {
             System.out.println("Bu kategoriyada vazifa mavjud emas.");
@@ -209,7 +244,7 @@ public class Main {
         }
     }
 
-    private static void showProsimeByStatus(PromiseService service, InputHelper input) {
+    private static void showPromiseByStatus(PromiseService service, InputHelper input) {
         PromiseStatus status = input.readStatus("Qaysi status malumotlarini korishni xohlaysiz? ");
         List<Promise> promises = service.findPromisesByStatus(status);
         if(promises.isEmpty()) {
@@ -224,6 +259,35 @@ public class Main {
                     " | " + "Kategoriya: " + promise.getCategory() +
                     " | " + "Deadline: " + promise.getDeadline() +
                     " | " + "Status: " + promise.getStatus());
+        }
+    }
+
+    private static void showDashboard(PromiseService service) {
+        int total = service.getAllPromises().size();
+        System.out.println();
+        System.out.println("========= LIFE NAVIGATOR ==========");
+        System.out.println("Jami vazifalar: " + total);
+        System.out.println("Kutilmoqda: " + service.countPromisesByStatus(PromiseStatus.PENDING));
+        System.out.println("Jarayonda: " + service.countPromisesByStatus(PromiseStatus.IN_PROGRESS));
+        System.out.println("Bajarilgan: " + service.countPromisesByStatus(PromiseStatus.COMPLETED));
+        System.out.println("Bekor qilingan: " + service.countPromisesByStatus(PromiseStatus.CANCELLED));
+        System.out.println("Muddati o'tgan: " + service.countPromisesByStatus(PromiseStatus.OVERDUE));
+        System.out.println("===================================");
+    }
+
+    private static void showUpcomingPromises(PromiseService service) {
+        List<Promise> promises = service.getUpcomingPromise();
+        System.out.println("======== DEADLINE YAQINLASHAYOTGAN VAZIFALAR ========");
+        if (promises.isEmpty()) {
+            System.out.println("Kiyingi 24 soat ichida deadline yo'q.");
+            return;
+        }
+        for (Promise promise : promises) {
+            System.out.println("ID: " + promise.getId() +
+                    " | Nomi: " + promise.getTitle() +
+                    " | Deadline: " + promise.getDeadline() +
+                    " | Status: " + promise.getStatus()
+            );
         }
     }
 }

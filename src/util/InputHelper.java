@@ -1,13 +1,11 @@
 package util;
 
-import model.Promise;
 import model.PromiseCategory;
 import model.PromiseStatus;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.InputMismatchException;
-import java.util.List;
 import java.util.Scanner;
 
 public class InputHelper {
@@ -70,7 +68,7 @@ public class InputHelper {
         }
     }
 
-    public PromiseCategory readCategory(String message) {
+    public PromiseCategory readOptionalCategory(String message) {
         while (true) {
             System.out.println(message);
             System.out.println("1. O'qish");
@@ -78,24 +76,29 @@ public class InputHelper {
             System.out.println("3. Sog'liq");
             System.out.println("4. Shaxsiy");
             System.out.println("5. Boshqa");
+            System.out.println("Agar kategoriyani o'zgartirmasangiz [Enter] ni bosing");
 
-            int choice = readInt("Tanlang: ");
+            String input = scanner.nextLine();
 
-            switch (choice) {
+            if(input.isBlank()) {
+                return null;
+            }
 
-                case 1:
+            switch (input) {
+
+                case "1":
                     return PromiseCategory.STUDY;
 
-                case 2:
+                case "2":
                     return PromiseCategory.WORK;
 
-                case 3:
+                case "3":
                     return PromiseCategory.HEALTH;
 
-                case 4:
+                case "4":
                     return PromiseCategory.PERSONAL;
 
-                case 5:
+                case "5":
                     return PromiseCategory.OTHER;
 
                 default:
@@ -162,6 +165,28 @@ public class InputHelper {
 
                 System.out.println("Xatolik: Deadline formati noto'g'ri.");
                 System.out.println("Masalan: 2026.10.10 18:30");
+            }
+        }
+    }
+
+    public PromiseCategory readCategory(String message) {
+        while (true) {
+            System.out.println(message);
+            System.out.println("1. O'qish");
+            System.out.println("2. Ish");
+            System.out.println("3. Sog'lik");
+            System.out.println("4. Shaxsiy");
+            System.out.println("5. Boshqa");
+
+            int choice = readInt("Tanlang: ");
+            switch (choice) {
+                case 1: return PromiseCategory.STUDY;
+                case 2: return PromiseCategory.WORK;
+                case 3: return PromiseCategory.HEALTH;
+                case 4: return PromiseCategory.PERSONAL;
+                case 5: return PromiseCategory.OTHER;
+                default:
+                    System.out.println("Xatolik: 1-5 orasida son tanlang.");
             }
         }
     }

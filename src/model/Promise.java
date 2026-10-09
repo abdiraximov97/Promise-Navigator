@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public class Promise {
     private static int nextId = 1;
-    private int id;
+    private final int id;
     private String title;
     private String description;
     private LocalDateTime deadline;
@@ -46,15 +46,6 @@ public class Promise {
         }
     }
 
-    public boolean updateDeadline(LocalDateTime newdeadline) {
-        validateDeadline(newdeadline);
-        this.deadline = newdeadline;
-        if(status == PromiseStatus.OVERDUE) {
-            status = PromiseStatus.PENDING;
-        }
-        return true;
-    }
-
     // Vadani "Jarayonda" holatiga o'tqazadi
     public boolean start() {
         if(status != PromiseStatus.PENDING) {
@@ -91,9 +82,8 @@ public class Promise {
     public boolean isOverdue() {
 //        Vazifani muddati o'tib ketgan va vazifa hali bajarilmagan va vazifa bekor qilinmagan (true)
 //        unday bo'lmasa (false) qiymat qaytaradi.
-        return  status
-                == PromiseStatus.PENDING
-                || status == PromiseStatus.IN_PROGRESS
+        return  (status == PromiseStatus.PENDING
+                || status == PromiseStatus.IN_PROGRESS)
                 && deadline.isBefore(LocalDateTime.now());
     }
 
@@ -146,6 +136,14 @@ public class Promise {
             throw new IllegalArgumentException("Vazifa turi null bo'lishi mumkin emas.");
         }
         this.category = category;
+    }
+
+    public void updateDeadline(LocalDateTime newdeadline) {
+        validateDeadline(newdeadline);
+        this.deadline = newdeadline;
+        if(status == PromiseStatus.OVERDUE) {
+            status = PromiseStatus.PENDING;
+        }
     }
 
 
