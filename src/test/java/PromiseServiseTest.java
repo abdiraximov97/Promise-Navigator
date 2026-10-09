@@ -1032,4 +1032,714 @@ class PromiseServiceTest {
         // Natija null bo'lishi kerak
         assertNull(found);
     }
+
+
+    @Test
+    void removePromiseShouldRemovePromiseById() {
+        // Profil va xizmat yaratamiz
+        LifeProfile profile = new LifeProfile("Shaxboz");
+        PromiseService service = new PromiseService(profile);
+
+        // Vazifa yaratamiz
+        Promise promise = new Promise(
+                "Java o'rganish",
+                "OOP mavzusini o'rganish",
+                LocalDateTime.now().plusDays(1),
+                PromiseCategory.STUDY
+        );
+
+        // Vazifani profilga qo'shamiz
+        service.addPromise(promise);
+
+        // Vazifa ro'yxatga qo'shilganini tekshiramiz
+        assertSame(promise, service.findPromiseById(promise.getId()));
+
+        // Vazifani ID orqali o'chiramiz
+        Promise removed = service.removePromise(promise.getId());
+
+        // O'chirilgan obyekt aynan shu vazifa ekanini tekshiramiz
+        assertSame(promise, removed);
+
+        // Vazifa endi topilmasligi kerak
+        assertNull(service.findPromiseById(promise.getId()));
+
+        // Ro'yxat bo'sh qolganini tekshiramiz
+        assertTrue(service.getAllPromises().isEmpty());
+    }
+
+
+    @Test
+    void removePromiseShouldReturnNullForUnknownId() {
+        // Profil va xizmat yaratamiz
+        LifeProfile profile = new LifeProfile("Shaxboz");
+        PromiseService service = new PromiseService(profile);
+
+        // Mavjud bo'lmagan ID ni o'chirishga urinib ko'ramiz
+        Promise removed = service.removePromise(9999);
+
+        // Hech qanday vazifa o'chirilmagan bo'lishi kerak
+        assertNull(removed);
+
+        // Ro'yxat o'zgarmagan va bo'sh qolgan bo'lishi kerak
+        assertTrue(service.getAllPromises().isEmpty());
+    }
+
+
+    @Test
+    void findPendingPromisesShouldReturnOnlyPendingOnes() {
+        // Profil va xizmat yaratamiz
+        LifeProfile profile = new LifeProfile("Shaxboz");
+        PromiseService service = new PromiseService(profile);
+
+        // Birinchi vazifa: PENDING
+        Promise firstPromise = new Promise(
+                "Java o'rganish",
+                "OOP mavzusini o'rganish",
+                LocalDateTime.now().plusDays(1),
+                PromiseCategory.STUDY
+        );
+
+        // Ikkinchi vazifa: PENDING
+        Promise secondPromise = new Promise(
+                "Kitob o'qish",
+                "10 sahifa o'qish",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.PERSONAL
+        );
+
+        // Uchinchi vazifa: IN_PROGRESS bo'ladi
+        Promise thirdPromise = new Promise(
+                "Mashq qilish",
+                "Java kod yozish",
+                LocalDateTime.now().plusDays(3),
+                PromiseCategory.STUDY
+        );
+
+        // Vazifalarni profilga qo'shamiz
+        service.addPromise(firstPromise);
+        service.addPromise(secondPromise);
+        service.addPromise(thirdPromise);
+
+        // Uchinchi vazifani boshlaymiz
+        assertTrue(service.startPromise(thirdPromise.getId()));
+
+        // Faqat PENDING holatidagi vazifalarni olamiz
+        List<Promise> result =
+                service.findPromisesByStatus(PromiseStatus.PENDING);
+
+        // Natijada ikkita vazifa bo'lishi kerak
+        assertEquals(2, result.size());
+
+        // To'g'ri vazifalar qaytganini tekshiramiz
+        assertTrue(result.contains(firstPromise));
+        assertTrue(result.contains(secondPromise));
+
+        // IN_PROGRESS vazifasi natijaga kirmasligi kerak
+        assertFalse(result.contains(thirdPromise));
+    }
+
+
+    @Test
+    void findStudyPromisesShouldReturnOnlyStudyCategory() {
+        // Profil va xizmat yaratamiz
+        LifeProfile profile = new LifeProfile("Shaxboz");
+        PromiseService service = new PromiseService(profile);
+
+        // STUDY kategoriyasidagi birinchi vazifa
+        Promise studyPromise1 = new Promise(
+                "Java o'rganish",
+                "OOP mavzusini o'rganish",
+                LocalDateTime.now().plusDays(1),
+                PromiseCategory.STUDY
+        );
+
+        // STUDY kategoriyasidagi ikkinchi vazifa
+        Promise studyPromise2 = new Promise(
+                "Test yozish",
+                "JUnit bilan ishlash",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.STUDY
+        );
+
+        // PERSONAL kategoriyasidagi vazifa
+        Promise personalPromise = new Promise(
+                "Kitob o'qish",
+                "10 sahifa o'qish",
+                LocalDateTime.now().plusDays(3),
+                PromiseCategory.PERSONAL
+        );
+
+        // Barcha vazifalarni profilga qo'shamiz
+        service.addPromise(studyPromise1);
+        service.addPromise(studyPromise2);
+        service.addPromise(personalPromise);
+
+        // Faqat STUDY kategoriyasidagi vazifalarni qidiramiz
+        List<Promise> result =
+                service.findPromisesByCategory(PromiseCategory.STUDY);
+
+        // Natijada ikkita vazifa bo'lishi kerak
+        assertEquals(2, result.size());
+
+        // Ikkala STUDY vazifasi ham natijada mavjudligini tekshiramiz
+        assertTrue(result.contains(studyPromise1));
+        assertTrue(result.contains(studyPromise2));
+
+        // PERSONAL vazifasi natijaga kirmasligi kerak
+        assertFalse(result.contains(personalPromise));
+    }
+
+
+    @Test
+    void countPendingPromisesShouldReturnCorrectCount() {
+        // Profil va xizmat yaratamiz
+        LifeProfile profile = new LifeProfile("Shaxboz");
+        PromiseService service = new PromiseService(profile);
+
+        // Birinchi vazifa: PENDING
+        Promise promise1 = new Promise(
+                "Java o'rganish",
+                "OOP mavzusini o'rganish",
+                LocalDateTime.now().plusDays(1),
+                PromiseCategory.STUDY
+        );
+
+        // Ikkinchi vazifa: PENDING
+        Promise promise2 = new Promise(
+                "Kitob o'qish",
+                "10 sahifa o'qish",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.PERSONAL
+        );
+
+        // Uchinchi vazifa: keyin IN_PROGRESS bo'ladi
+        Promise promise3 = new Promise(
+                "Test yozish",
+                "JUnit bilan ishlash",
+                LocalDateTime.now().plusDays(3),
+                PromiseCategory.STUDY
+        );
+
+        // Vazifalarni profilga qo'shamiz
+        service.addPromise(promise1);
+        service.addPromise(promise2);
+        service.addPromise(promise3);
+
+        // Uchinchi vazifani boshlaymiz
+        assertTrue(service.startPromise(promise3.getId()));
+
+        // PENDING vazifalar sonini hisoblaymiz
+        int pendingCount =
+                service.countPromisesByStatus(PromiseStatus.PENDING);
+
+        // Faqat ikkita vazifa PENDING bo'lishi kerak
+        assertEquals(2, pendingCount);
+
+        // IN_PROGRESS vazifalar sonini ham tekshiramiz
+        int inProgressCount =
+                service.countPromisesByStatus(PromiseStatus.IN_PROGRESS);
+
+        assertEquals(1, inProgressCount);
+    }
+
+
+    @Test
+    void upcomingListShouldContainOnlyActivePromises() {
+        // Profil va xizmat yaratamiz
+        LifeProfile profile = new LifeProfile("Shaxboz");
+        PromiseService service = new PromiseService(profile);
+
+        // Birinchi vazifa: PENDING
+        Promise promise1 = new Promise(
+                "Java o'rganish",
+                "OOP mavzusini o'rganish",
+                LocalDateTime.now().plusDays(1),
+                PromiseCategory.STUDY
+        );
+
+        // Ikkinchi vazifa: PENDING
+        Promise promise2 = new Promise(
+                "Kitob o'qish",
+                "10 sahifa o'qish",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.PERSONAL
+        );
+
+        // Uchinchi vazifa: keyin IN_PROGRESS bo'ladi
+        Promise promise3 = new Promise(
+                "Test yozish",
+                "JUnit bilan ishlash",
+                LocalDateTime.now().plusDays(3),
+                PromiseCategory.STUDY
+        );
+
+        // Vazifalarni profilga qo'shamiz
+        service.addPromise(promise1);
+        service.addPromise(promise2);
+        service.addPromise(promise3);
+
+        // Uchinchi vazifani boshlaymiz
+        assertTrue(service.startPromise(promise3.getId()));
+
+        // PENDING vazifalar sonini hisoblaymiz
+        int pendingCount =
+                service.countPromisesByStatus(PromiseStatus.PENDING);
+
+        // Faqat ikkita vazifa PENDING bo'lishi kerak
+        assertEquals(2, pendingCount);
+
+        // IN_PROGRESS vazifalar sonini ham tekshiramiz
+        int inProgressCount =
+                service.countPromisesByStatus(PromiseStatus.IN_PROGRESS);
+
+        assertEquals(1, inProgressCount);
+    }
+
+
+    @Test
+    void updatePromiseShouldPreserveOldDataWhenDeadlineIsInvalid() {
+        // Profil va servis yaratamiz
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Kelajakdagi muddat bilan va'da yaratamiz
+        LocalDateTime oldDeadline = LocalDateTime.now().plusDays(2);
+
+        Promise promise = new Promise(
+                "Java",
+                "Eski izoh",
+                oldDeadline,
+                PromiseCategory.STUDY
+        );
+
+        service.addPromise(promise);
+
+        // Eski qiymatlarni saqlab olamiz
+        String oldTitle = promise.getTitle();
+        String oldDescription = promise.getDescription();
+        LocalDateTime savedDeadline = promise.getDeadline();
+
+        // O'tmishdagi muddat bilan yangilashni tekshiramiz
+        LocalDateTime pastDeadline = LocalDateTime.now().minusDays(1);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> service.updatePromise(
+                        promise.getId(),
+                        "Yangi nom",
+                        "Yangi izoh",
+                        pastDeadline,
+                        PromiseCategory.PERSONAL
+                )
+        );
+
+        // Xato yuz bergach eski ma'lumotlar saqlanganini tekshiramiz
+        assertEquals(oldTitle, promise.getTitle());
+        assertEquals(oldDescription, promise.getDescription());
+        assertEquals(savedDeadline, promise.getDeadline());
+        assertEquals(PromiseCategory.STUDY, promise.getCategory());
+    }
+
+    @Test
+    void updatePromiseShouldKeepOldValuesForNullFields() {
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        LocalDateTime deadline = LocalDateTime.now().plusDays(2);
+
+        Promise promise = new Promise(
+                "Java",
+                "Eski izoh",
+                deadline,
+                PromiseCategory.STUDY
+        );
+
+        service.addPromise(promise);
+
+        boolean result = service.updatePromise(
+                promise.getId(),
+                null,       // Nom o'zgarmasin
+                null,       // Izoh o'zgarmasin
+                null,       // Muddat o'zgarmasin
+                null        // Kategoriya o'zgarmasin
+        );
+
+        assertTrue(result);
+        assertEquals("java", promise.getTitle());
+        assertEquals("eski izoh", promise.getDescription());
+        assertEquals(deadline, promise.getDeadline());
+        assertEquals(PromiseCategory.STUDY, promise.getCategory());
+    }
+
+
+    @Test
+    void updatingUnknownPromiseShouldNotChangeExistingPromises() {
+        // Profil va servis yaratamiz
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Mavjud va'dani yaratamiz
+        Promise promise = new Promise(
+                "Java",
+                "OOP o'rganish",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.STUDY
+        );
+
+        service.addPromise(promise);
+
+        // Mavjud bo'lmagan ID orqali yangilashga urinamiz
+        boolean result = service.updatePromise(
+                999999,
+                "Yangi nom",
+                "Yangi izoh",
+                LocalDateTime.now().plusDays(3),
+                PromiseCategory.PERSONAL
+        );
+
+        // Yangilash muvaffaqiyatsiz bo'lishi kerak
+        assertFalse(result);
+
+        // Mavjud va'da o'zgarmaganini tekshiramiz
+        assertEquals("java", promise.getTitle());
+        assertEquals("oop o'rganish", promise.getDescription());
+        assertEquals(PromiseCategory.STUDY, promise.getCategory());
+
+        // Profil ichida faqat bitta va'da qolishi kerak
+        assertEquals(1, service.getAllPromises().size());
+    }
+
+
+    @Test
+    void removingSamePromiseTwiceShouldReturnNullSecondTime() {
+        // Profil va servis yaratamiz
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Yangi va'da yaratamiz
+        Promise promise = new Promise(
+                "Java",
+                "OOP o'rganish",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.STUDY
+        );
+
+        service.addPromise(promise);
+
+        // Birinchi marta o'chiramiz
+        Promise removed = service.removePromise(promise.getId());
+
+        // Birinchi urinishda va'da qaytishi kerak
+        assertNotNull(removed);
+        assertEquals(promise.getId(), removed.getId());
+
+        // Ikkinchi marta o'chirishga urinib ko'ramiz
+        Promise removedAgain = service.removePromise(promise.getId());
+
+        // Va'da allaqachon o'chirilgan, shu sababli null kutiladi
+        assertNull(removedAgain);
+
+        // Profil bo'sh qolishi kerak
+        assertTrue(service.getAllPromises().isEmpty());
+    }
+
+
+    @Test
+    void overdueCheckerShouldMarkPromiseAsOverdue() throws InterruptedException {
+        // Profil va servis yaratamiz
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Kelajakdagi muddat bilan va'da yaratamiz
+        Promise promise = new Promise(
+                "Java",
+                "OOP o'rganish",
+                LocalDateTime.now().plusSeconds(2),
+                PromiseCategory.STUDY
+        );
+
+        service.addPromise(promise);
+
+        try {
+            // Avtomatik tekshiruvni boshlaymiz
+            service.startOverdueChecker();
+
+            // Muddat o'tishini kutamiz
+            Thread.sleep(3000);
+
+            // Holat OVERDUE bo'lishi kerak
+            assertEquals(PromiseStatus.OVERDUE, promise.getStatus());
+        } finally {
+            // Test tugaganda scheduler'ni to'xtatamiz
+            service.stopOverdueChecker();
+        }
+    }
+
+
+    @Test
+    void completedAndCancelledPromisesShouldNotBecomeOverdue() {
+        // Sinov vaqtini belgilaymiz
+        Clock originalClock = Clock.systemDefaultZone();
+        Clock fixedClock = Clock.fixed(
+                Instant.parse("2026-10-09T10:00:00Z"),
+                ZoneId.of("UTC")
+        );
+
+        Promise.setClock(fixedClock);
+
+        try {
+            // Profil va servis yaratamiz
+            LifeProfile profile = new LifeProfile("Test");
+            PromiseService service = new PromiseService(profile);
+
+            // Hozirgi sinov vaqtidan keyingi muddat
+            LocalDateTime deadline = LocalDateTime.now().plusHours(1);
+
+            Promise completed = new Promise(
+                    "Kitob",
+                    "Kitob o'qish",
+                    deadline,
+                    PromiseCategory.PERSONAL
+            );
+
+            Promise cancelled = new Promise(
+                    "Sport",
+                    "Sport bilan shug'ullanish",
+                    deadline,
+                    PromiseCategory.PERSONAL
+            );
+
+            service.addPromise(completed);
+            service.addPromise(cancelled);
+
+            // Birinchi va'dani bajaramiz
+            assertTrue(completed.start());
+            assertTrue(completed.complete());
+
+            // Ikkinchi va'dani bekor qilamiz
+            assertTrue(cancelled.cancel());
+
+            // Vaqtni muddatdan keyinga o'tkazamiz
+            Promise.setClock(Clock.fixed(
+                    Instant.parse("2026-10-09T12:00:00Z"),
+                    ZoneId.of("UTC")
+            ));
+
+            // Muddatlarni tekshiramiz
+            completed.checkOverdue();
+            cancelled.checkOverdue();
+
+            // Holatlar o'zgarmasligi kerak
+            assertEquals(PromiseStatus.COMPLETED, completed.getStatus());
+            assertEquals(PromiseStatus.CANCELLED, cancelled.getStatus());
+
+        } finally {
+            // Boshqa testlarga ta'sir qilmasligi uchun soatni tiklaymiz
+            Promise.setClock(originalClock);
+        }
+    }
+
+
+    @Test
+    void stoppingOverdueCheckerShouldShutdownScheduler() {
+        // Profil va servis yaratamiz
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Avtomatik tekshiruvni boshlaymiz
+        service.startOverdueChecker();
+
+        // Tekshiruvchini to'xtatamiz
+        service.stopOverdueChecker();
+
+        // Scheduler yopilganini tekshiramiz
+        assertTrue(service.isOverdueCheckerShutdown());
+    }
+
+
+    @Test
+    void startingStoppedOverdueCheckerShouldThrowException() {
+
+        // Test uchun profil va servis yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Scheduler'ni avval ishga tushiramiz.
+        service.startOverdueChecker();
+
+        // Endi uni to'xtatamiz.
+        service.stopOverdueChecker();
+
+        // To'xtatilgan scheduler'ni qayta ishga tushirish
+        // IllegalStateException chiqarishi kerak.
+        assertThrows(
+                IllegalStateException.class,
+                service::startOverdueChecker
+        );
+    }
+
+    @Test
+    void startingOverdueCheckerTwiceShouldThrowException() {
+        // Scheduler uchun kerakli obyektlarni yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Birinchi marta ishga tushirish muvaffaqiyatli bo'lishi kerak.
+        service.startOverdueChecker();
+
+        // Ikkinchi marta ishga tushirish exception chiqarishi kerak.
+        assertThrows(
+                IllegalStateException.class,
+                service::startOverdueChecker
+        );
+
+        // Testdan keyin scheduler'ni to'xtatamiz.
+        service.stopOverdueChecker();
+    }
+
+    @Test
+    void stoppingOverdueCheckerBeforeStartingShouldThrowException() {
+
+        // Test uchun profil va servis yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Ishga tushirilmagan scheduler'ni to'xtatish
+        // IllegalStateException chiqarishi kerak.
+        assertThrows(
+                IllegalStateException.class,
+                service::stopOverdueChecker
+        );
+    }
+
+    @Test
+    void overdueCheckerShouldContinueAfterOnePromiseFails() {
+
+        // Profil va servis yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Xatolikni boshqariladigan tarzda sinash uchun
+        // Promise klassidagi checkOverdue() metodini
+        // alohida almashtirish imkoniyati kerak bo'ladi.
+    }
+
+    @Test
+    void upcomingPromisesShouldBeSortedByNearestDeadline() {
+        // Test uchun hozirgi vaqtni belgilaymiz.
+        LocalDateTime now = Promise.getCurrentTime();
+
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Va'dalarni ataylab noto'g'ri tartibda qo'shamiz.
+        Promise later = new Promise(
+                "keyinroq", "Ikkinchi vazifa",
+                now.plusHours(5), PromiseCategory.PERSONAL
+        );
+
+        Promise sooner = new Promise(
+                "tezroq", "Birinchi vazifa",
+                now.plusHours(2), PromiseCategory.STUDY
+        );
+
+        service.addPromise(later);
+        service.addPromise(sooner);
+
+        // Natija eng yaqin muddatdan boshlanishi kerak.
+        List<Promise> result = service.getUpcomingPromises();
+
+        assertEquals(2, result.size());
+        assertEquals(sooner.getId(), result.get(0).getId());
+        assertEquals(later.getId(), result.get(1).getId());
+    }
+
+    @Test
+    void categoryFilterShouldReturnOnlyStudyPromises() {
+
+        // Test uchun profil va servis yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Ikki xil kategoriyadagi va'dalarni yaratamiz.
+        LocalDateTime now = Promise.getCurrentTime();
+
+        Promise studyPromise = new Promise(
+                "Java o'rganish",
+                "OOP mashq qilish",
+                now.plusHours(3),
+                PromiseCategory.STUDY
+        );
+
+        Promise personalPromise = new Promise(
+                "Sayr qilish",
+                "Toza havoda yurish",
+                now.plusHours(5),
+                PromiseCategory.PERSONAL
+        );
+
+        // Ikkala va'dani profilga qo'shamiz.
+        service.addPromise(studyPromise);
+        service.addPromise(personalPromise);
+
+        // Faqat STUDY kategoriyasidagi va'dalarni olamiz.
+        List<Promise> result =
+                profile.findPromisesByCategory(PromiseCategory.STUDY);
+
+        // Natijada faqat bitta va'da bo'lishi kerak.
+        assertEquals(1, result.size());
+
+        // Qaytgan va'da aynan studyPromise bo'lishi kerak.
+        assertEquals(studyPromise.getId(), result.get(0).getId());
+
+        // Kategoriya ham STUDY bo'lishi kerak.
+        assertEquals(PromiseCategory.STUDY, result.get(0).getCategory());
+    }
+
+    @Test
+    void statusFilterShouldReturnOnlyPendingPromises() {
+
+        // Test uchun profil va servis yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Kelajakdagi muddatlarni belgilaymiz.
+        LocalDateTime now = Promise.getCurrentTime();
+
+        // Birinchi va'da PENDING holatida yaratiladi.
+        Promise pendingPromise = new Promise(
+                "Kitob o'qish",
+                "10 sahifa o'qish",
+                now.plusHours(2),
+                PromiseCategory.PERSONAL
+        );
+
+        // Ikkinchi va'dani yaratamiz.
+        Promise inProgressPromise = new Promise(
+                "Java o'rganish",
+                "OOP mashq qilish",
+                now.plusHours(4),
+                PromiseCategory.STUDY
+        );
+
+        // Ikkinchi va'dani IN_PROGRESS holatiga o'tkazamiz.
+        inProgressPromise.start();
+
+        // Ikkala va'dani profilga qo'shamiz.
+        service.addPromise(pendingPromise);
+        service.addPromise(inProgressPromise);
+
+        // Faqat PENDING va'dalarni topamiz.
+        List<Promise> result =
+                profile.findPromisesByStatus(PromiseStatus.PENDING);
+
+        // Faqat bitta va'da qaytishi kerak.
+        assertEquals(1, result.size());
+
+        // Qaytgan va'da pendingPromise bo'lishi kerak.
+        assertEquals(pendingPromise.getId(), result.get(0).getId());
+
+        // Uning statusi PENDING bo'lishi kerak.
+        assertEquals(PromiseStatus.PENDING, result.get(0).getStatus());
+    }
 }

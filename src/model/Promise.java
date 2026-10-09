@@ -157,6 +157,36 @@ public class Promise {
 
         clock = newClock;
     }
+
+    public void validateUpdate(
+            String newTitle,
+            String newDescription,
+            LocalDateTime newDeadline,
+            PromiseCategory newCategory
+    ) {
+        // Nom bo'sh bo'lmasligi kerak
+        if (newTitle == null || newTitle.isBlank()) {
+            throw new IllegalArgumentException("Nom bo'sh bo'lishi mumkin emas");
+        }
+        // Izoh bo'sh bo'lmasligi kerak
+        if (newDescription == null || newDescription.isBlank()) {
+            throw new IllegalArgumentException("Izoh bo'sh bo'lishi mumkin emas");
+        }
+        // Kategoriya null bo'lmasligi kerak
+        if (newCategory == null) {
+            throw new IllegalArgumentException("Kategoriya tanlanishi kerak");
+        }
+        // Muddat mavjud va kelajakda bo'lishi kerak
+        if (newDeadline == null || !newDeadline.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Muddat kelajakda bo'lishi kerak");
+        }
+    }
+
+    // Promise ishlatayotgan Clock asosida hozirgi vaqtni qaytaramiz.
+    public static LocalDateTime getCurrentTime() {
+        return LocalDateTime.now(clock);
+    }
+
     // Vadani matnli formatda qaytaradi.
     @Override
     public String toString() {

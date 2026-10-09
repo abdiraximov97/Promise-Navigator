@@ -10,10 +10,13 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.Comparator;
 
 
 public class PromiseService {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    // Scheduler oldin ishga tushirilganmi?
+    private boolean overdueCheckerStarted = false;
     private final LifeProfile profile;
 
     public PromiseService(LifeProfile profile) {
@@ -60,6 +63,7 @@ public class PromiseService {
         }
         return false;
     }
+
     public boolean completePromise(int id) {
         Promise promise = findPromiseById(id);
         if (promise != null) {
@@ -67,6 +71,7 @@ public class PromiseService {
         }
         return false;
     }
+
     public boolean cancelPromise(int id) {
         Promise promise = findPromiseById(id);
         if (promise != null) {
@@ -74,19 +79,87 @@ public class PromiseService {
         }
         return false;
     }
-    public void chescOverduePromise(){
-        for(Promise promise : profile.getPromises()) {
-            promise.checkOverdue();
+
+    public void chescOverduePromise() {
+
+        // Profil ichidagi barcha va'dalarni aylanib chiqamiz.
+        for (Promise promise : profile.getPromises()) {
+
+            try {
+                // Har bir va'daning muddatini tekshiramiz.
+                promise.checkOverdue();
+
+            } catch (RuntimeException exception) {
+
+                // Bitta va'dada xato bo'lsa, qolganlarini
+                // tekshirishni davom ettiramiz.
+                System.err.println(
+                        "Va'da ID " + promise.getId()
+                                + " tekshirilayotganda xatolik: "
+                                + exception.getMessage()
+                );
+            }
         }
     }
-    public void startOverdueChecker() {
-        scheduler.scheduleAtFixedRate(() -> {
-            chescOverduePromise();
-        }, 0, 1, TimeUnit.SECONDS);
-   }
-    public void stopOverdueChecker() {
+
+    public synchronized void startOverdueChecker() {
+
+        // Scheduler to'xtatilgan bo'lsa, uni qayta ishga tushirib bo'lmaydi.
+        if (scheduler.isShutdown()) {
+            throw new IllegalStateException(
+                    "Scheduler to'xtatilgan, qayta ishga tushirib bo'lmaydi."
+            );
+        }
+
+        // Scheduler allaqachon ishga tushgan bo'lsa, takroran boshlamaymiz.
+        if (overdueCheckerStarted) {
+            throw new IllegalStateException(
+                    "Overdue checker allaqachon ishga tushirilgan."
+            );
+        }
+
+        // Scheduler ishga tushirilganini belgilaymiz.
+        overdueCheckerStarted = true;
+
+        try {
+            // Har 1 soniyada va'dalarning muddatini tekshiramiz.
+            scheduler.scheduleAtFixedRate(
+                    this::chescOverduePromise,
+                    0,
+                    1,
+                    TimeUnit.SECONDS
+            );
+        } catch (RuntimeException exception) {
+            // Ishga tushirish muvaffaqiyatsiz bo'lsa, belgini tiklaymiz.
+            overdueCheckerStarted = false;
+
+            // Xatoni yuqoriga uzatamiz.
+            throw exception;
+        }
+    }
+
+    public synchronized void stopOverdueChecker() {
+
+        // Scheduler umuman ishga tushirilmagan bo'lsa,
+        // uni to'xtatishga ruxsat bermaymiz.
+        if (!overdueCheckerStarted) {
+            throw new IllegalStateException(
+                    "Overdue checker hali ishga tushirilmagan."
+            );
+        }
+
+        // Scheduler allaqachon to'xtatilgan bo'lsa,
+        // ikkinchi marta to'xtatishga ruxsat bermaymiz.
+        if (scheduler.isShutdown()) {
+            throw new IllegalStateException(
+                    "Overdue checker allaqachon to'xtatilgan."
+            );
+        }
+
+        // Scheduler'ni to'xtatamiz.
         scheduler.shutdown();
-   }
+    }
+
     public int countPromisesByStatus(PromiseStatus status) {
         int count = 0;
         for(Promise promise : profile.getPromises()) {
@@ -97,51 +170,68 @@ public class PromiseService {
         }
         return count;
    }
+
     public List<Promise> getUpcomingPromise() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = Promise.getCurrentTime();
         LocalDateTime next24Hours = now.plusHours(24);
-        List<Promise> upcoming = new ArrayList<>();
+        List<Promise> upcomingPromises = new ArrayList<>();
         for(Promise promise : profile.getPromises()) {
             promise.checkOverdue();
             if ((promise.getStatus() == PromiseStatus.PENDING
                     || promise.getStatus() == PromiseStatus.IN_PROGRESS)
                     && !promise.getDeadline().isBefore(now)
                     && !promise.getDeadline().isAfter(next24Hours))
-               upcoming.add(promise);
+                upcomingPromises.add(promise);
         }
-        return upcoming;
+        // Va'dalarni eng yaqin muddatdan eng uzoq muddatga saralaymiz.
+        upcomingPromises.sort(
+                Comparator.comparing(Promise::getDeadline)
+        );
+        return upcomingPromises;
    }
-    public List<Promise> getUpcomingPromises() {
-        // Hozirgi vaqtni bir marta olamiz.
-        LocalDateTime now = LocalDateTime.now();
 
-        // Keyingi 24 soat chegarasini hisoblaymiz.
+    public List<Promise> getUpcomingPromises() {
+
+        // Promise klassi ishlatayotgan bir xil vaqt manbasidan foydalanamiz.
+        LocalDateTime now = Promise.getCurrentTime();
+
+        // Keyingi 24 soat chegarasi.
         LocalDateTime next24Hours = now.plusHours(24);
 
-        // Natijalarni saqlash uchun bo'sh ro'yxat yaratamiz.
+        // Natijalarni saqlaydigan yangi ro'yxat.
         List<Promise> upcomingPromises = new ArrayList<>();
 
-        // Profil ichidagi barcha vazifalarni ko'rib chiqamiz.
+        // Profil ichidagi barcha va'dalarni tekshiramiz.
         for (Promise promise : profile.getPromises()) {
-            // Vazifaning muddatini olamiz.
+
+            // Muddati o'tgan holatni yangilaymiz.
+            promise.checkOverdue();
+
+            // Faqat faol va'dalarni ko'rib chiqamiz.
+            if (promise.getStatus() != PromiseStatus.PENDING
+                    && promise.getStatus() != PromiseStatus.IN_PROGRESS) {
+                continue;
+            }
+
+            // Va'daning muddatini olamiz.
             LocalDateTime deadline = promise.getDeadline();
-            // Faqat hali bajarilmagan va bekor qilinmagan
-            // faol vazifalarni hisobga olamiz.
-            boolean isActive =
-                    promise.getStatus() == PromiseStatus.PENDING
-                            || promise.getStatus() == PromiseStatus.IN_PROGRESS;
-            // Muddat hozir bilan keyingi 24 soat orasida ekanini tekshiramiz.
-            boolean isDueSoon =
-                    !deadline.isBefore(now)
-                            && !deadline.isAfter(next24Hours);
-            // Ikkala shart bajarilsa, vazifani natijaga qo'shamiz.
-            if (isActive && isDueSoon) {
+
+            // Muddati hozirdan boshlab 24 soat ichida bo'lsa, qo'shamiz.
+            if (!deadline.isBefore(now)
+                    && !deadline.isAfter(next24Hours)) {
                 upcomingPromises.add(promise);
             }
         }
-        // Topilgan vazifalar ro'yxatini qaytaramiz.
+
+        // Eng yaqin muddatli va'dani birinchi o'ringa olib chiqamiz.
+        upcomingPromises.sort(
+                Comparator.comparing(Promise::getDeadline)
+        );
+
+        // Saralangan natijani qaytaramiz.
         return upcomingPromises;
     }
+
     // Muddati o'tgan va'dalarni qaytaradi.
     public List<Promise> getOverduePromises() {
 
@@ -162,6 +252,10 @@ public class PromiseService {
 
         // Natijani qaytaramiz.
         return overduePromises;
+    }
+
+    public boolean isOverdueCheckerShutdown() {
+        return scheduler.isShutdown();
     }
 
 }

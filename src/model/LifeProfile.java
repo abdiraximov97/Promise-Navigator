@@ -73,29 +73,88 @@ public class LifeProfile {
         return null;
     }
 
-    public boolean updatePromise(int id, String newTitle, String newDescription, LocalDateTime newDeadline, PromiseCategory newCategory) {
-        Promise promise = findPromiseById(id);
-        if(promise != null) {
-//            Yangi nom bo'sh bo'lmasa o'zgartiramiz
-            if(newTitle != null && !newTitle.isBlank()) {
-                promise.updateTitle(newTitle);
-            }
-//            Yangi izoh bo'sh bo'lmasa o'zgartiramiz
-            if(newDescription != null && !newDescription.isBlank()) {
-                promise.updateDescription(newDescription);
-            }
-//            Dedline berilgan bo'lsa o'zgartiramiz
-            if(newDeadline != null) {
-                promise.updateDeadline(newDeadline);
-            }
-//            Kategoriya berilgan bo'lsa o'zgartiramiz
-            if(newCategory != null) {
-                promise.updateCategory(newCategory);
-            }
+//    public boolean updatePromise(int id, String newTitle, String newDescription, LocalDateTime newDeadline, PromiseCategory newCategory) {
+//        Promise promise = findPromiseById(id);
+//
+//        if(promise != null) {
+////            Yangi nom bo'sh bo'lmasa o'zgartiramiz
+//            if(newTitle != null && !newTitle.isBlank()) {
+//                promise.updateTitle(newTitle);
+//            }
+////            Yangi izoh bo'sh bo'lmasa o'zgartiramiz
+//            if(newDescription != null && !newDescription.isBlank()) {
+//                promise.updateDescription(newDescription);
+//            }
+////            Dedline berilgan bo'lsa o'zgartiramiz
+//            if(newDeadline != null) {
+//                promise.updateDeadline(newDeadline);
+//            }
+////            Kategoriya berilgan bo'lsa o'zgartiramiz
+//            if(newCategory != null) {
+//                promise.updateCategory(newCategory);
+//            }
+//
+//
+//            return true;
+//        }
+//
+//        return false;
+//    }
 
-            return true;
+
+    public boolean updatePromise(
+            int id,
+            String newTitle,
+            String newDescription,
+            LocalDateTime newDeadline,
+            PromiseCategory newCategory
+    ) {
+        // ID orqali va'dani topamiz
+        Promise promise = findPromiseById(id);
+
+        // Va'da topilmasa, false qaytaramiz
+        if (promise == null) {
+            return false;
         }
 
-        return false;
+        // 1. Avval barcha yangi qiymatlarni tekshiramiz.
+        // Bu bosqichda hech qanday eski qiymat o'zgarmaydi.
+        if (newTitle != null && newTitle.isBlank()) {
+            throw new IllegalArgumentException("Nom bo'sh bo'lishi mumkin emas");
+        }
+
+        if (newDescription != null && newDescription.isBlank()) {
+            throw new IllegalArgumentException("Izoh bo'sh bo'lishi mumkin emas");
+        }
+
+        if (newDeadline != null) {
+            // validateDeadline private bo'lgani uchun,
+            // muddatni vaqtincha o'zgartirmay tekshirish uchun
+            // alohida tekshiruv kerak.
+            if (!newDeadline.isAfter(LocalDateTime.now())) {
+                throw new IllegalArgumentException(
+                        "Muddat kelajakda bo'lishi kerak"
+                );
+            }
+        }
+
+        // 2. Barcha tekshiruvlardan o'tgach, yangilaymiz
+        if (newTitle != null) {
+            promise.updateTitle(newTitle);
+        }
+
+        if (newDescription != null) {
+            promise.updateDescription(newDescription);
+        }
+
+        if (newDeadline != null) {
+            promise.updateDeadline(newDeadline);
+        }
+
+        if (newCategory != null) {
+            promise.updateCategory(newCategory);
+        }
+
+        return true;
     }
 }

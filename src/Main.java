@@ -83,6 +83,7 @@ public class Main {
             System.out.println("9. Status bo'yicha ko'rsatish");
             System.out.println("10. Dashboard / Statistika");
             System.out.println("11. Deadline yaqinlashayotgan vazifalar");
+            System.out.println("12. Muddati o'tgan vazifalar");
             System.out.println("0. Chiqish");
 
             String choice = input.readRequiredString("Tanlang: ");
@@ -123,6 +124,9 @@ public class Main {
                     break;
                 case "11": //YAqinlashayotgan dedlinelarni ko'rish
                     showUpcomingPromises(service);
+                    break;
+                case "12": //YAqinlashayotgan dedlinelarni ko'rish
+                    showOverduePromises(service);
                     break;
                 default: System.out.println("Noto'g'ri tanlov (0 - 9) oralig'ida tanlang");
             }
@@ -287,6 +291,33 @@ public class Main {
                     " | Nomi: " + promise.getTitle() +
                     " | Deadline: " + promise.getDeadline() +
                     " | Status: " + promise.getStatus()
+            );
+        }
+    }
+
+
+    private static void showOverduePromises(PromiseService service) {
+
+        // Service orqali muddati o'tgan vazifalarni olamiz.
+        List<Promise> promises = service.getOverduePromises();
+
+        // Bo'lim sarlavhasini chiqaramiz.
+        System.out.println("======== MUDDATI O'TGAN VAZIFALAR ========");
+
+        // Agar ro'yxat bo'sh bo'lsa, foydalanuvchiga xabar beramiz.
+        if (promises.isEmpty()) {
+            System.out.println("Muddati o'tgan vazifalar mavjud emas.");
+            return;
+        }
+
+        // Har bir muddati o'tgan vazifa haqida ma'lumot chiqaramiz.
+        for (Promise promise : promises) {
+            System.out.println(
+                    "ID: " + promise.getId()
+                            + " | Nomi: " + promise.getTitle()
+                            + " | Izoh: " + promise.getDescription()
+                            + " | Deadline: " + promise.getDeadline()
+                            + " | Status: " + promise.getStatus()
             );
         }
     }
