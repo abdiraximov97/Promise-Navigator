@@ -1,6 +1,7 @@
 
 package model;
 import java.time.LocalDateTime;
+import java.time.Clock;
 
 public class Promise {
     private static int nextId = 1;
@@ -10,6 +11,8 @@ public class Promise {
     private LocalDateTime deadline;
     private PromiseStatus status;
     private PromiseCategory category;
+    // Vaqt manbasi. Oddiy dasturda haqiqiy vaqt ishlatiladi.
+    private static Clock clock = Clock.systemDefaultZone();
 
     // Constructor funksiya
     public Promise(String title, String description, LocalDateTime deadline, PromiseCategory category) {
@@ -40,7 +43,7 @@ public class Promise {
         if(deadline == null) {
             throw new IllegalArgumentException("Dedline 'null' bo'lishi mumkin emas.");
         }
-        if(deadline.isBefore(LocalDateTime.now()))  {
+        if (deadline.isBefore(LocalDateTime.now(clock))) {
             throw new IllegalArgumentException("Dedline o'tgan vaqt bo'lishi mumkin emas. " +
                     "\nDeadline vaqti hozirgi vaqtdan kiyin bo'lishi kerak");
         }
@@ -82,9 +85,9 @@ public class Promise {
     public boolean isOverdue() {
 //        Vazifani muddati o'tib ketgan va vazifa hali bajarilmagan va vazifa bekor qilinmagan (true)
 //        unday bo'lmasa (false) qiymat qaytaradi.
-        return  (status == PromiseStatus.PENDING
+        return (status == PromiseStatus.PENDING
                 || status == PromiseStatus.IN_PROGRESS)
-                && deadline.isBefore(LocalDateTime.now());
+                && deadline.isBefore(LocalDateTime.now(clock));
     }
 
     public void checkOverdue() {
@@ -146,7 +149,14 @@ public class Promise {
         }
     }
 
+    // Testda vaqt manbasini almashtirish uchun.
+    public static void setClock(Clock newClock) {
+        if (newClock == null) {
+            throw new IllegalArgumentException("Clock null bo'lishi mumkin emas.");
+        }
 
+        clock = newClock;
+    }
     // Vadani matnli formatda qaytaradi.
     @Override
     public String toString() {
