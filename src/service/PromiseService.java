@@ -254,6 +254,44 @@ public class PromiseService {
         return overduePromises;
     }
 
+    public List<Promise> getTodayPromises() {
+        // Hozirgi vaqtni Promise klassidagi bir xil vaqt manbasidan olamiz.
+        LocalDateTime now = Promise.getCurrentTime();
+
+        // Bugungi sanani ajratib olamiz.
+        var today = now.toLocalDate();
+
+        // Bugungi vazifalarni saqlash uchun bo'sh ro'yxat yaratamiz.
+        List<Promise> todayPromises = new ArrayList<>();
+
+        // Profil ichidagi barcha vazifalarni aylanib chiqamiz.
+        for (Promise promise : profile.getPromises()) {
+
+            // Vazifaning holatini muddatiga qarab yangilaymiz.
+            promise.checkOverdue();
+
+            // Bajarilgan va bekor qilingan vazifalarni o'tkazib yuboramiz.
+            if (promise.getStatus() == PromiseStatus.COMPLETED
+                    || promise.getStatus() == PromiseStatus.CANCELLED) {
+                continue;
+            }
+
+            // Vazifaning deadline sanasini olamiz.
+            var deadlineDate = promise.getDeadline().toLocalDate();
+
+            // Deadline bugungi kunga to'g'ri kelsa, ro'yxatga qo'shamiz.
+            if (deadlineDate.equals(today)) {
+                todayPromises.add(promise);
+            }
+        }
+
+        // Vazifalarni eng yaqin vaqtdan boshlab saralaymiz.
+        todayPromises.sort(Comparator.comparing(Promise::getDeadline));
+
+        // Tayyor ro'yxatni qaytaramiz.
+        return todayPromises;
+    }
+
     public boolean isOverdueCheckerShutdown() {
         return scheduler.isShutdown();
     }

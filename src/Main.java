@@ -84,6 +84,7 @@ public class Main {
             System.out.println("10. Dashboard / Statistika");
             System.out.println("11. Deadline yaqinlashayotgan vazifalar");
             System.out.println("12. Muddati o'tgan vazifalar");
+            System.out.println("13. Bugungi vazifalar");
             System.out.println("0. Chiqish");
 
             String choice = input.readRequiredString("Tanlang: ");
@@ -128,7 +129,10 @@ public class Main {
                 case "12": //YAqinlashayotgan dedlinelarni ko'rish
                     showOverduePromises(service);
                     break;
-                default: System.out.println("Noto'g'ri tanlov (0 - 9) oralig'ida tanlang");
+                case "13": // Bugungi vazifalar
+                    showTodayPromises(service);
+                    break;
+                default: System.out.println("Noto'g'ri tanlov (0 - 12   ) oralig'ida tanlang");
             }
 
         }
@@ -295,7 +299,6 @@ public class Main {
         }
     }
 
-
     private static void showOverduePromises(PromiseService service) {
 
         // Service orqali muddati o'tgan vazifalarni olamiz.
@@ -316,6 +319,31 @@ public class Main {
                     "ID: " + promise.getId()
                             + " | Nomi: " + promise.getTitle()
                             + " | Izoh: " + promise.getDescription()
+                            + " | Deadline: " + promise.getDeadline()
+                            + " | Status: " + promise.getStatus()
+            );
+        }
+    }
+    
+    private static void showTodayPromises(PromiseService service) {
+
+        // Service orqali bugungi vazifalarni olamiz.
+        List<Promise> promises = service.getTodayPromises();
+
+        // Bo'lim sarlavhasini chiqaramiz.
+        System.out.println("======== BUGUNGI VAZIFALAR ========");
+
+        // Bugungi vazifalar bo'lmasa, xabar chiqaramiz.
+        if (promises.isEmpty()) {
+            System.out.println("Bugun muddati keladigan vazifalar yo'q.");
+            return;
+        }
+
+        // Har bir vazifaning ma'lumotlarini chiqaramiz.
+        for (Promise promise : promises) {
+            System.out.println(
+                    "ID: " + promise.getId()
+                            + " | Nomi: " + promise.getTitle()
                             + " | Deadline: " + promise.getDeadline()
                             + " | Status: " + promise.getStatus()
             );
