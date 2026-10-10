@@ -10,7 +10,11 @@ public class Promise {
     private String description;
     private LocalDateTime deadline;
     private PromiseStatus status;
+    // Vazifaning muddati o'tishidan oldingi holatini saqlaydi.
+    private PromiseStatus statusBeforeOverdue;
     private PromiseCategory category;
+    // Vazifaning ustuvorlik darajasi.
+    private Priority priority = Priority.MEDIUM;
     // Vaqt manbasi. Oddiy dasturda haqiqiy vaqt ishlatiladi.
     private static Clock clock = Clock.systemDefaultZone();
 
@@ -28,25 +32,36 @@ public class Promise {
             );
         }
 
-        validateDeadline(deadline);
 
         this.id = nextId++;
         this.title = title.toLowerCase();
         this.description = description.toLowerCase();
-        this.deadline = deadline;
+        this.deadline = validateDeadline(deadline);
         this.status = PromiseStatus.PENDING;
         this.category = category;
+
+
     }
 
 //    deadline larni tekshirish
-    private void validateDeadline(LocalDateTime deadline) {
-        if(deadline == null) {
-            throw new IllegalArgumentException("Dedline 'null' bo'lishi mumkin emas.");
+    private LocalDateTime validateDeadline(LocalDateTime deadline) {
+        // Deadline berilmagan bo'lsa, 7 kun keyingi vaqtni qaytaramiz.
+        if (deadline == null) {
+            return LocalDateTime.now(clock).plusDays(7);
         }
-        if (deadline.isBefore(LocalDateTime.now(clock))) {
-            throw new IllegalArgumentException("Dedline o'tgan vaqt bo'lishi mumkin emas. " +
-                    "\nDeadline vaqti hozirgi vaqtdan kiyin bo'lishi kerak");
+
+        // Hozirgi vaqtni bir marta olamiz.
+        LocalDateTime now = LocalDateTime.now(clock);
+
+        // O'tgan deadline'ni rad etamiz.
+        if (deadline.isBefore(now)) {
+            throw new IllegalArgumentException(
+                    "Deadline hozirgi vaqtdan keyin bo'lishi kerak."
+            );
         }
+
+        // Tekshiruvdan o'tgan deadline'ni qaytaramiz.
+        return deadline;
     }
 
     // Vadani "Jarayonda" holatiga o'tqazadi
@@ -83,18 +98,30 @@ public class Promise {
 
     // Vadani muddati o'tganmi yoki muddati o'tmaganmi tekshiradi (true yoki false qaytaradi)
     public boolean isOverdue() {
-//        Vazifani muddati o'tib ketgan va vazifa hali bajarilmagan va vazifa bekor qilinmagan (true)
-//        unday bo'lmasa (false) qiymat qaytaradi.
+        // Deadline yo'q bo'lsa, vazifa muddati o'tgan deb hisoblanmaydi.
+        if (deadline == null) {
+            return false;
+        }
+
+        // Faqat bajarilmagan va bekor qilinmagan vazifani tekshiramiz.
         return (status == PromiseStatus.PENDING
                 || status == PromiseStatus.IN_PROGRESS)
                 && deadline.isBefore(LocalDateTime.now(clock));
     }
 
+
     public void checkOverdue() {
-        if(isOverdue()) {
+        // Vazifaning muddati o'tganini tekshiramiz.
+        if (isOverdue()) {
+
+            // Hozirgi holatni OVERDUE qilishdan oldin saqlaymiz.
+            statusBeforeOverdue = status;
+
+            // Vazifani muddati o'tgan holatiga o'tkazamiz.
             status = PromiseStatus.OVERDUE;
         }
     }
+
 
     public int getId() {
         return id;
@@ -120,6 +147,22 @@ public class Promise {
         return status;
     }
 
+    // Vazifaning ustuvorligini qaytaradi.
+    public Priority getPriority() {
+        return priority;
+    }
+
+    // Vazifaning ustuvorligini o'zgartiradi.
+    public void setPriority(Priority priority) {
+        if (priority == null) {
+            throw new IllegalArgumentException(
+                    "Ustuvorlik null bo'lishi mumkin emas."
+            );
+        }
+
+        this.priority = priority;
+    }
+
     public void updateTitle(String title) {
         if(title == null || title.isBlank()) {
             throw new IllegalArgumentException("Vazifa nomi bo'sh bo'lishi mumkin emas");
@@ -141,12 +184,27 @@ public class Promise {
         this.category = category;
     }
 
-    public void updateDeadline(LocalDateTime newdeadline) {
-        validateDeadline(newdeadline);
-        this.deadline = newdeadline;
-        if(status == PromiseStatus.OVERDUE) {
-            status = PromiseStatus.PENDING;
+    public void updateDeadline(LocalDateTime newDeadline) {
+        // Yangi muddatni tekshiramiz va tekshirilgan qiymatni saqlaymiz.
+        this.deadline = validateDeadline(newDeadline);
+
+        // Agar vazifa muddati o'tgan bo'lsa,
+        // yangi muddat berilgach uni PENDING holatiga qaytaramiz.
+
+        if (status == PromiseStatus.OVERDUE) {
+            // Vazifaning oldingi holatini tiklaymiz.
+            if (statusBeforeOverdue != null) {
+                status = statusBeforeOverdue;
+            } else {
+                // Oldingi holat saqlanmagan bo'lsa,
+                // standart holat sifatida PENDING ni tanlaymiz.
+                status = PromiseStatus.PENDING;
+            }
+
+            // Saqlangan holatni tozalaymiz.
+            statusBeforeOverdue = null;
         }
+
     }
 
     // Testda vaqt manbasini almashtirish uchun.
@@ -197,6 +255,7 @@ public class Promise {
                 ", deadline=" + deadline +
                 ", status=" + status +
                 ", category=" + category +
+                ", priority=" + priority +
                 '}';
     }
 }

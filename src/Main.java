@@ -1,5 +1,6 @@
 import model.Promise;
 import model.LifeProfile;
+import model.Priority;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
@@ -23,7 +24,7 @@ public class Main {
         var promise2 = new Promise(
                 "darslarni qilish",
                 "OOP ni o'rganish",
-                LocalDateTime.of(2026, 10, 10, 8, 30),
+                LocalDateTime.of(2026, 10, 10, 8, 30).plusDays(1),
                 PromiseCategory.STUDY);
 
         var promise3 = new Promise(
@@ -85,6 +86,10 @@ public class Main {
             System.out.println("11. Deadline yaqinlashayotgan vazifalar");
             System.out.println("12. Muddati o'tgan vazifalar");
             System.out.println("13. Bugungi vazifalar");
+            System.out.println("14. Bugungi vazifalarni kategoriya bo‘yicha ko‘rish");
+            System.out.println("15. Vazifalarni deadline bo'yicha saralash");
+            System.out.println("16. Vazifalarni kategoriya va holat bo'yicha filtrlash");
+            System.out.println("17. Vazifani nomi bo'yicha qidirish");
             System.out.println("0. Chiqish");
 
             String choice = input.readRequiredString("Tanlang: ");
@@ -132,12 +137,32 @@ public class Main {
                 case "13": // Bugungi vazifalar
                     showTodayPromises(service);
                     break;
-                default: System.out.println("Noto'g'ri tanlov (0 - 12   ) oralig'ida tanlang");
+                case "14": // Bugungi vazifalar
+                    showTodayPromisesByCategory(service, input);
+                    break;
+                case "15": // Vazifalarni deadline bo'yicha tartiblash
+                    showPromisesSortedByDeadline(service);
+                    break;
+                case "16": // kategoriya va holati bo'yicha tanlash
+                    showPromisesByCategoryAndStatus(service, input);
+                    break;
+                case "17": // nomi bo'yicha qidirish
+                    searchPromisesByTitle(service, input);
+                    break;
+                default: System.out.println("Noto'g'ri tanlov (0 - 15) oralig'ida tanlang");
             }
 
-        }
+            System.out.println("===== Ustuvorlik bo'yicha vazifalar =====");
 
+            for (Promise promise : service.getPromisesSortedByPriority()) {
+                System.out.println(
+                        promise.getPriority() + " | " + promise
+                );
+            }
+        }
     }
+
+
 
     private static void showAllPromises(PromiseService service) {
         List<Promise> promises = service.getAllPromises();
@@ -217,18 +242,53 @@ public class Main {
 
     private static void addPromise(PromiseService service, InputHelper input) {
         System.out.println("Yangi vazifa qo'shing!");
+
         try {
+            // 1. Vazifa ma'lumotlarini foydalanuvchidan olamiz.
             String title = input.readRequiredString("Vazifa nomini kiriting: ");
+
             String description = input.readRequiredString("Izohni kiriting: ");
-            LocalDateTime deadline = input.readDeadline("Deadline: ");
+
+            LocalDateTime deadline = input.readOptionalDeadline("Deadline: ");
+
             PromiseCategory category = input.readCategory("Vazifa turi: ");
 
-            Promise promise = new Promise(title, description, deadline, category);
-            service.addPromise(promise);
-            System.out.println("Vazifa muvaffaqiyatli qo'shildi.");
-        }
+            // 2. Vazifa ustuvorligini tanlaymiz.
+            Priority priority = input.readPriority(
+                    "Vazifa ustuvorligini tanlang:"
+            );
 
-        catch (IllegalArgumentException e) {
+            // 3. Barcha ma'lumotlar bilan bitta vazifa yaratamiz.
+            Promise promise = new Promise(
+                    title,
+                    description,
+                    deadline,
+                    category
+            );
+
+            // 4. Tanlangan ustuvorlikni o'rnatamiz.
+            promise.setPriority(priority);
+
+            // 5. Vazifani faqat bir marta qo'shamiz.
+            service.addPromise(promise);
+
+            System.out.println("Vazifa muvaffaqiyatli qo'shildi!");
+
+            System.out.println("Deadline: " + promise.getDeadline());
+            System.out.println("Priority: " + promise.getPriority());
+
+            // Sinov uchun ustuvorliklarni belgilaymiz.
+            Promise javaPromise = service.findPromise("java");
+            if (javaPromise != null) {
+                javaPromise.setPriority(Priority.HIGH);
+            }
+
+            Promise bookPromise = service.findPromise("kitob o'qish");
+            if (bookPromise != null) {
+                bookPromise.setPriority(Priority.LOW);
+            }
+
+        } catch (IllegalArgumentException e) {
             System.out.println("Xatolik: " + e.getMessage());
         }
     }
@@ -324,7 +384,7 @@ public class Main {
             );
         }
     }
-    
+
     private static void showTodayPromises(PromiseService service) {
 
         // Service orqali bugungi vazifalarni olamiz.
@@ -349,4 +409,173 @@ public class Main {
             );
         }
     }
+
+    private static void showTodayPromisesByCategory(PromiseService service, InputHelper input) {
+
+        // Foydalanuvchidan kategoriyani tanlashni so'raymiz.
+        PromiseCategory category = input.readCategory(
+                "Kategoriyani tanlang (STUDY, WORK, HEALTH, PERSONAL, OTHER): "
+        );
+
+        // Tanlangan kategoriyadagi bugungi vazifalarni olamiz.
+        List<Promise> promises =
+                service.getTodayPromisesByCategory(category);
+
+        // Hech qanday vazifa topilmasa, xabar chiqaramiz.
+        if (promises.isEmpty()) {
+            System.out.println("Bu kategoriyada bugungi vazifalar yo'q.");
+            return;
+        }
+
+        // Topilgan vazifalarni ekranga chiqaramiz.
+        System.out.println("===== Bugungi vazifalar: " + category + " =====");
+
+        for (Promise promise : promises) {
+            System.out.println(promise);
+        }
+    }
+
+    private static void showPromisesSortedByDeadline(PromiseService service) {
+
+        // Vazifalarni deadline bo'yicha saralangan holda olamiz.
+        List<Promise> promises = service.getPromisesSortedByDeadline();
+
+        // Ro'yxat bo'sh bo'lsa, xabar chiqaramiz.
+        if (promises.isEmpty()) {
+            System.out.println("Hozircha vazifalar mavjud emas.");
+            return;
+        }
+
+        // Saralangan vazifalar sarlavhasini chiqaramiz.
+        System.out.println("===== Vazifalar: eng yaqin deadline birinchi =====");
+
+        // Har bir vazifani navbat bilan ekranga chiqaramiz.
+        for (Promise promise : promises) {
+            System.out.println(promise);
+        }
+    }
+
+//    private static void showPromisesByCategoryAndStatus(PromiseService service, InputHelper input) {
+//
+//        // Foydalanuvchidan kategoriyani tanlashni so'raymiz.
+//        PromiseCategory category = input.readCategory(
+//                "Kategoriyani tanlang: "
+//        );
+//
+//        // Foydalanuvchidan vazifa holatini tanlashni so'raymiz.
+//        PromiseStatus status = input.readStatus(
+//                "Vazifa holatini tanlang: "
+//        );
+//
+//        // Tanlangan kategoriya va holat bo'yicha vazifalarni olamiz.
+//        List<Promise> promises =
+//                service.getPromisesByCategoryAndStatus(category, status);
+//
+//        // Mos vazifalar topilmasa, xabar chiqaramiz.
+//        if (promises.isEmpty()) {
+//            System.out.println("Bu kategoriya va holatga mos vazifalar topilmadi.");
+//            return;
+//        }
+//
+//        // Natijalar sarlavhasini chiqaramiz.
+//        System.out.println("===== Filtrlangan vazifalar =====");
+//        System.out.println("Kategoriya: " + category);
+//        System.out.println("Holat: " + status);
+//
+//        // Har bir topilgan vazifani ekranga chiqaramiz.
+//        for (Promise promise : promises) {
+//            System.out.println(promise);
+//        }
+//    }
+
+    private static void showPromisesByCategoryAndStatus(PromiseService service, InputHelper input) {
+
+        // 1. Kategoriyani tanlaymiz.
+        PromiseCategory category = input.readCategory(
+                "Avval kategoriyani tanlang:"
+        );
+
+        // 2. Shu kategoriyadagi barcha vazifalarni chiqaramiz.
+        List<Promise> categoryPromises = service.getPromisesByCategory(category);
+
+        System.out.println("===== " + category + " kategoriyasidagi vazifalar =====");
+
+        if (categoryPromises.isEmpty()) {
+            System.out.println("Bu kategoriyada vazifalar mavjud emas.");
+            return;
+        }
+
+        for (Promise promise : categoryPromises) {
+            System.out.println(
+                    "ID: " + promise.getId() +
+                            " | " + "Nomi: " + promise.getTitle() +
+                            " | " + "Izoh: " + promise.getDescription() +
+                            " | " + "Category: " + promise.getCategory() +
+                            " | " + "Deadline: " + promise.getDeadline() +
+                            " | " + "Status: " + promise.getStatus()
+            );
+        }
+
+        // 3. Endi foydalanuvchidan holatni tanlashni so'raymiz.
+        PromiseStatus status = input.readStatus(
+                "Endi kerakli holatni tanlang:"
+        );
+
+        // 4. Tanlangan kategoriya va holat bo'yicha filtrlash.
+        List<Promise> filteredPromises =
+                service.getPromisesByCategoryAndStatus(category, status);
+
+        // 5. Yakuniy natijani chiqaramiz.
+        System.out.println("===== Tanlangan kategoriya va holat bo'yicha natija =====");
+
+        if (filteredPromises.isEmpty()) {
+            System.out.println("Bu kategoriyada tanlangan holatga mos vazifalar yo'q.");
+            return;
+        }
+
+        for (Promise promise : filteredPromises) {
+            System.out.println(
+                    "ID: " + promise.getId() +
+                            " | " + "Nomi: " + promise.getTitle() +
+                            " | " + "Izoh: " + promise.getDescription() +
+                            " | " + "Category: " + promise.getCategory() +
+                            " | " + "Deadline: " + promise.getDeadline() +
+                            " | " + "Status: " + promise.getStatus()
+            );
+        }
+    }
+
+    private static void searchPromisesByTitle(PromiseService service, InputHelper input) {
+
+        // Foydalanuvchidan qidiruv so'zini olamiz.
+        String keyword = input.readRequiredString(
+                "Qidirilayotgan vazifa yoki izohini kiriting: "
+        );
+
+        // Vazifalarni nomining bir qismi orqali qidiramiz.
+        List<Promise> results =
+                service.searchPromises(keyword);
+
+        // Natijalarni chiqaramiz.
+        if (results.isEmpty()) {
+            System.out.println("Mos vazifa topilmadi.");
+            return;
+        }
+
+        System.out.println("===== Qidiruv natijalari =====");
+
+        for (Promise promise : results) {
+            System.out.println(
+                    "ID: " + promise.getId() +
+                            " | " + "Nomi: " + promise.getTitle() +
+                            " | " + "Izoh: " + promise.getDescription() +
+                            " | " + "Category: " + promise.getCategory() +
+                            " | " + "Deadline: " + promise.getDeadline() +
+                            " | " + "Status: " + promise.getStatus()
+            );
+        }
+    }
+
+
+
 }

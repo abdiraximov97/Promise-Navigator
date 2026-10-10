@@ -1742,4 +1742,182 @@ class PromiseServiceTest {
         // Uning statusi PENDING bo'lishi kerak.
         assertEquals(PromiseStatus.PENDING, result.get(0).getStatus());
     }
+
+    @Test
+    void getTodayPromisesShouldReturnOnlyPromisesDueToday() {
+        // Test vaqtini belgilaymiz.
+        Promise.setClock(
+                java.time.Clock.fixed(
+                        java.time.Instant.parse("2026-10-09T10:00:00Z"),
+                        java.time.ZoneOffset.UTC
+                )
+        );
+
+        try {
+            // Test uchun profil va service yaratamiz.
+            LifeProfile profile = new LifeProfile("Test");
+            PromiseService service = new PromiseService(profile);
+
+            // Bugun muddati keladigan vazifa.
+            Promise today = new Promise(
+                    "Bugungi vazifa",
+                    "Bugun bajarish",
+                    LocalDateTime.of(2026, 10, 9, 18, 0),
+                    PromiseCategory.STUDY
+            );
+
+            // Ertaga muddati keladigan vazifa.
+            Promise tomorrow = new Promise(
+                    "Ertangi vazifa",
+                    "Ertaga bajarish",
+                    LocalDateTime.of(2026, 10, 10, 18, 0),
+                    PromiseCategory.PERSONAL
+            );
+
+            // Ikkala vazifani ham profilga qo'shamiz.
+            service.addPromise(today);
+            service.addPromise(tomorrow);
+
+            // Bugungi vazifalarni olamiz.
+            List<Promise> result = service.getTodayPromises();
+
+            // Faqat bugungi vazifa chiqishi kerak.
+            assertEquals(1, result.size());
+            assertEquals(today.getId(), result.get(0).getId());
+        } finally {
+            // Boshqa testlarga ta'sir qilmasligi uchun vaqtni tiklaymiz.
+            Promise.setClock(java.time.Clock.systemDefaultZone());
+        }
+    }
+
+    @Test
+    void getTodayPromisesByCategoryShouldReturnOnlyMatchingCategory() {
+
+        // Test vaqtini belgilaymiz.
+        Promise.setClock(
+                java.time.Clock.fixed(
+                        java.time.Instant.parse("2026-10-10T05:00:00Z"),
+                        java.time.ZoneOffset.UTC
+                )
+        );
+
+        try {
+            // Test uchun profil va servis yaratamiz.
+            LifeProfile profile = new LifeProfile("Test");
+            PromiseService service = new PromiseService(profile);
+
+            // Bugungi STUDY vazifasini yaratamiz.
+            Promise studyPromise = new Promise(
+                    "Java o'rganish",
+                    "OOP mashqi",
+                    LocalDateTime.of(2026, 10, 10, 18, 0),
+                    PromiseCategory.STUDY
+            );
+
+            // Bugungi PERSONAL vazifasini yaratamiz.
+            Promise personalPromise = new Promise(
+                    "Kitob o'qish",
+                    "10 sahifa",
+                    LocalDateTime.of(2026, 10, 10, 19, 0),
+                    PromiseCategory.PERSONAL
+            );
+
+            // Ikkala vazifani servisga qo'shamiz.
+            service.addPromise(studyPromise);
+            service.addPromise(personalPromise);
+
+            // Faqat STUDY kategoriyasini so'raymiz.
+            List<Promise> result =
+                    service.getTodayPromisesByCategory(PromiseCategory.STUDY);
+
+            // Faqat bitta vazifa qaytishi kerak.
+            assertEquals(1, result.size());
+
+            // Qaytgan vazifa aynan STUDY vazifasi bo'lishi kerak.
+            assertEquals(studyPromise.getId(), result.get(0).getId());
+
+        } finally {
+            // Test tugagach, soatni asl holatiga qaytaramiz.
+            Promise.setClock(java.time.Clock.systemDefaultZone());
+        }
+    }
+
+    @Test
+    void getPromisesSortedByDeadlineShouldReturnNearestFirst() {
+        // Sinov uchun profil va xizmat yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // Keyinroq bajariladigan vazifani birinchi yaratamiz.
+        Promise laterPromise = new Promise(
+                "Keyingi vazifa",
+                "Keyin bajariladi",
+                LocalDateTime.now().plusDays(3),
+                PromiseCategory.STUDY
+        );
+
+        // Oldinroq bajariladigan vazifani ikkinchi yaratamiz.
+        Promise soonerPromise = new Promise(
+                "Yaqin vazifa",
+                "Oldin bajariladi",
+                LocalDateTime.now().plusDays(1),
+                PromiseCategory.PERSONAL
+        );
+
+        // Vazifalarni xizmatga qo'shamiz.
+        service.addPromise(laterPromise);
+        service.addPromise(soonerPromise);
+
+        // Saralangan ro'yxatni olamiz.
+        List<Promise> result = service.getPromisesSortedByDeadline();
+
+        // Eng yaqin muddatli vazifa birinchi kelishini tekshiramiz.
+        assertEquals(soonerPromise.getId(), result.get(0).getId());
+
+        // Eng uzoq muddatli vazifa ikkinchi kelishini tekshiramiz.
+        assertEquals(laterPromise.getId(), result.get(1).getId());
+    }
+
+
+    @Test
+    void getPromisesByCategoryAndStatusShouldReturnMatchingPromises() {
+
+        // Test uchun profil va xizmat yaratamiz.
+        LifeProfile profile = new LifeProfile("Test");
+        PromiseService service = new PromiseService(profile);
+
+        // STUDY kategoriyasidagi vazifa yaratamiz.
+        Promise studyPromise = new Promise(
+                "Java o'rganish",
+                "OOP mashqi",
+                LocalDateTime.now().plusDays(1),
+                PromiseCategory.STUDY
+        );
+
+        // PERSONAL kategoriyasidagi vazifa yaratamiz.
+        Promise personalPromise = new Promise(
+                "Kitob o'qish",
+                "10 sahifa",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.PERSONAL
+        );
+
+        // Ikkala vazifani xizmatga qo'shamiz.
+        service.addPromise(studyPromise);
+        service.addPromise(personalPromise);
+
+        // STUDY va PENDING bo'yicha filtrlaymiz.
+        List<Promise> result = service.getPromisesByCategoryAndStatus(
+                PromiseCategory.STUDY,
+                PromiseStatus.PENDING
+        );
+
+        // Faqat bitta vazifa topilganini tekshiramiz.
+        assertEquals(1, result.size());
+
+        // Topilgan vazifa aynan studyPromise ekanini tekshiramiz.
+        assertEquals(studyPromise.getId(), result.get(0).getId());
+    }
+
+
 }

@@ -1,5 +1,5 @@
 package util;
-
+import model.Priority;
 import model.PromiseCategory;
 import model.PromiseStatus;
 import java.time.LocalDateTime;
@@ -136,38 +136,35 @@ public class InputHelper {
         return scanner.nextLine();
     }
 
+
     public LocalDateTime readOptionalDeadline(String message) {
-
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
-
         while (true) {
+            System.out.println(message);
+            System.out.print(
+                    "Deadline kiriting (yyyy.MM.dd HH:mm) " +
+                            "yoki avtomatik 7 kun uchun Enter bosing: "
+            );
 
-            System.out.print(message);
-            String deadlineInput = scanner.nextLine();
+            String value = scanner.nextLine().trim();
 
-            if (deadlineInput.isBlank()) {
+            // Bo'sh qoldirilsa, null qaytaramiz.
+            if (value.isEmpty()) {
                 return null;
             }
 
             try {
-                LocalDateTime deadline =
-                        LocalDateTime.parse(
-                                deadlineInput,
-                                formatter
-                        );
-                if (deadline.isBefore(LocalDateTime.now())) {
-                    System.out.println("Xatolik: Deadline o'tgan vaqt bo'lishi mumkin emas.");
-                    continue;
-                }
-                return deadline;
+                return LocalDateTime.parse(
+                        value,
+                        DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm")
+                );
             } catch (DateTimeParseException e) {
-
-                System.out.println("Xatolik: Deadline formati noto'g'ri.");
-                System.out.println("Masalan: 2026.10.10 18:30");
+                System.out.println(
+                        "Noto'g'ri format. Masalan: 2026.10.17 18:30"
+                );
             }
         }
     }
+
 
     public PromiseCategory readCategory(String message) {
         while (true) {
@@ -187,6 +184,34 @@ public class InputHelper {
                 case 5: return PromiseCategory.OTHER;
                 default:
                     System.out.println("Xatolik: 1-5 orasida son tanlang.");
+            }
+        }
+    }
+
+    // Foydalanuvchidan ustuvorlikni tanlashni so'raydi.
+    public Priority readPriority(String message) {
+
+        while (true) {
+            System.out.println(message);
+            System.out.println("1. HIGH   - Yuqori");
+            System.out.println("2. MEDIUM - O'rta");
+            System.out.println("3. LOW    - Past");
+
+            // Foydalanuvchi tanlovini olamiz.
+            int choice = readInt("Tanlovingiz: ");
+
+            // Tanlangan raqamni Priority qiymatiga aylantiramiz.
+            switch (choice) {
+                case 1:
+                    return Priority.HIGH;
+                case 2:
+                    return Priority.MEDIUM;
+                case 3:
+                    return Priority.LOW;
+                default:
+                    System.out.println(
+                            "Noto'g'ri tanlov. 1, 2 yoki 3 ni kiriting."
+                    );
             }
         }
     }
