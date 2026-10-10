@@ -226,19 +226,83 @@ public class Main {
         }
     }
 
+
     private static void updatePromise(PromiseService service, InputHelper input) {
-        int updateId = input.readInt("Qaysi vazifani o'zgartirmoqchisiz: ");
-        String newTitle = input.readOptionalString("Vazifaning yangi nomi, o'zgartirmasangiz [Enter] ni bosing: ");
-        String newDescription = input.readOptionalString("Vazifa uchun yangi izoh, o'zgartirmasangiz [Enter] ni bosing: ");
-        LocalDateTime newDeadline = input.readOptionalDeadline("Yangi deadline, O'zgartirmasangiz [Enter] ni bosing: ");
-        PromiseCategory newCategory = input.readOptionalCategory("Yangi kategoriya, O'zgartirmasangiz [Enter] ni bosing: ");
-        boolean updated = service.updatePromise(updateId, newTitle, newDescription, newDeadline, newCategory);
+        // O'zgartiriladigan vazifaning ID raqamini olamiz.
+        int updateId = input.readInt(
+                "Qaysi vazifani o'zgartirmoqchisiz: "
+        );
+
+        // ID bo'yicha vazifani topamiz.
+        Promise promise = service.findPromiseById(updateId);
+
+        // Bunday ID mavjud bo'lmasa, metodni to'xtatamiz.
+        if (promise == null) {
+            System.out.println(
+                    "Xatolik: Bunday ID bilan vazifa mavjud emas."
+            );
+            return;
+        }
+
+        // Vazifaning eski qiymatlarini saqlaymiz.
+        String oldTitle = promise.getTitle();
+        String oldDescription = promise.getDescription();
+        LocalDateTime oldDeadline = promise.getDeadline();
+        PromiseCategory oldCategory = promise.getCategory();
+
+        // Yangi qiymatlarni so'raymiz.
+        String newTitle = input.readOptionalString(
+                "Vazifaning yangi nomi, o'zgartirmasangiz [Enter] ni bosing: "
+        );
+
+        String newDescription = input.readOptionalString(
+                "Vazifa uchun yangi izoh, o'zgartirmasangiz [Enter] ni bosing: "
+        );
+
+        LocalDateTime newDeadline = input.readOptionalDeadline(
+                "Yangi deadline, o'zgartirmasangiz [Enter] ni bosing: "
+        );
+
+        PromiseCategory newCategory = input.readOptionalCategory(
+                "Yangi kategoriya, o'zgartirmasangiz [Enter] ni bosing: "
+        );
+
+        // Bo'sh maydonlar uchun eski qiymatlarni saqlaymiz.
+        if (newTitle == null || newTitle.isBlank()) {
+            newTitle = oldTitle;
+        }
+
+        if (newDescription == null || newDescription.isBlank()) {
+            newDescription = oldDescription;
+        }
+
+        if (newDeadline == null) {
+            newDeadline = oldDeadline;
+        }
+
+        if (newCategory == null) {
+            newCategory = oldCategory;
+        }
+
+        // Vazifani faqat bir marta yangilaymiz.
+        boolean updated = service.updatePromise(
+                updateId,
+                newTitle,
+                newDescription,
+                newDeadline,
+                newCategory
+        );
+
+        // Natijani foydalanuvchiga ko'rsatamiz.
         if (updated) {
             System.out.println("Vazifa muvaffaqiyatli o'zgartirildi.");
         } else {
-            System.out.println("Xatolik: Bunday ID bilan vazifa mavjud emas.");
+            System.out.println(
+                    "Xatolik: Vazifani o'zgartirib bo'lmadi."
+            );
         }
     }
+
 
     private static void addPromise(PromiseService service, InputHelper input) {
         System.out.println("Yangi vazifa qo'shing!");
