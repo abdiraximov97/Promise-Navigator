@@ -19,14 +19,19 @@ public class PromiseService {
     // Scheduler oldin ishga tushirilganmi?
     private boolean overdueCheckerStarted = false;
     private final LifeProfile profile;
+    // Vazifalarni faylga saqlash va fayldan yuklash uchun obyekt.
+    private final PromiseFileStorage storage;
 
     public PromiseService(LifeProfile profile) {
         this.profile = profile;
+        this.storage = new PromiseFileStorage();
     }
 
     public void addPromise(Promise promise) {
         // Vazifani profilga qo'shamiz.
         profile.addPromise(promise);
+        // Faylga saqlaymiz.
+        saveToFile();
     }
 
     public List<Promise> getAllPromises() {
@@ -46,7 +51,15 @@ public class PromiseService {
     }
 
     public Promise removePromise(int id) {
-        return profile.removePromise(id);
+//        ID bo'yicha vazifalarni o'chiramiz
+        Promise removed = profile.removePromise(id);
+//        Vazifa haqiqatan o'chirilgan bo'lsa faylni yangilaymiz
+        if (removed != null) {
+            saveToFile();
+        }
+
+//        o'chirilgan vazifani qaytaramiz
+        return removed;
     }
 
     public boolean updatePromise(
@@ -55,7 +68,14 @@ public class PromiseService {
                                 String newDescription,
                                 LocalDateTime newDeadline,
                                 PromiseCategory newCategory) {
-        return profile.updatePromise(id, newTitle, newDescription, newDeadline, newCategory);
+        // Vazifani yangilashga harakat qilamiz.
+        boolean updated =  profile.updatePromise(id, newTitle, newDescription, newDeadline, newCategory);
+        // Yangilash muvaffaqiyatli bo'lsa, faylga saqlaymiz.
+        if (updated) {
+            saveToFile();
+        }
+        // Yangilash natijasini qaytaramiz.
+        return updated;
     }
 
     public boolean startPromise(int id) {
@@ -63,23 +83,45 @@ public class PromiseService {
         if (promise != null) {
             return promise.start();
         }
-        return false;
+        // Vazifani boshlashga harakat qilamiz.
+        boolean started = promise.start();
+
+        // Faqat muvaffaqiyatli boshlangan bo'lsa, saqlaymiz.
+        if (started) {
+            saveToFile();
+        }
+
+        return started;
     }
 
     public boolean completePromise(int id) {
         Promise promise = findPromiseById(id);
-        if (promise != null) {
-            return promise.complete();
+        if (promise == null) {
+            return false;
         }
-        return false;
+        // Vazifani bajarilgan deb belgilaymiz.
+        boolean completed = promise.complete();
+
+        // Bajarish muvaffaqiyatli bo'lsa, faylga saqlaymiz.
+        if (completed) {
+            saveToFile();
+        }
+
+        return completed;
     }
 
     public boolean cancelPromise(int id) {
         Promise promise = findPromiseById(id);
-        if (promise != null) {
-            return promise.cancel();
+        if (promise == null) {
+            return false;
         }
-        return false;
+        // Vazifani bekor qilishga harakat qilamiz.
+        boolean cancelled = promise.cancel();
+        if (cancelled) {
+            saveToFile();
+        }
+        // Bekor qilish muvaffaqiyatli bo'lsa, saqlaymiz.
+        return cancelled;
     }
 
     public void chescOverduePromise() {
@@ -425,23 +467,52 @@ public class PromiseService {
 
 
     // Vazifalarni avval ustuvorlik, keyin deadline bo'yicha saralaydi.
+
     public List<Promise> getPromisesSortedByPriority() {
-        // Barcha vazifalarning nusxasini olamiz.
+
+        // Barcha vazifalardan yangi ro'yxat yaratamiz.
+        List<Promise> sortedPromises = new ArrayList<>(getAllPromises());
+
+        // Ustuvorlik tartibi: HIGH -> MEDIUM -> LOW.
+        sortedPromises.sort(
+                Comparator.comparingInt(promise -> {
+                    if (promise.getPriority() == Priority.HIGH) {
+                        return 1;
+                    } else if (promise.getPriority() == Priority.MEDIUM) {
+                        return 2;
+                    } else {
+                        return 3;
+                    }
+                })
+        );
+
+        // Saralangan ro'yxatni qaytaramiz.
+        return sortedPromises;
+    }
+
+
+    public List<Promise> getPromisesSortedByPriorityAndDeadline() {
+
         List<Promise> sortedPromises =
                 new ArrayList<>(getAllPromises());
 
-        // Priority null bo'lsa, MEDIUM sifatida ko'rib chiqamiz.
-        // Birinchi navbatda HIGH, keyin MEDIUM, so'ng LOW.
         sortedPromises.sort(
-                Comparator.comparing(
-                        (Promise p) -> p.getPriority() == null
-                                ? Priority.MEDIUM
-                                : p.getPriority()
-                ).thenComparing(Promise::getDeadline)
+                Comparator
+                        .comparingInt((Promise promise) -> {
+                            if (promise.getPriority() == Priority.HIGH) {
+                                return 1;
+                            } else if (promise.getPriority() == Priority.MEDIUM) {
+                                return 2;
+                            } else {
+                                return 3;
+                            }
+                        })
+                        .thenComparing(Promise::getDeadline)
         );
 
         return sortedPromises;
     }
+
 
     public Promise findPromise(String title) {
         for (Promise promise : profile.getPromises()) {
@@ -450,6 +521,17 @@ public class PromiseService {
             }
         }
         return null;
+    }
+
+    // Fayldagi vazifalarni o'qib, profilga yuklaydi.
+    public void loadPromisesFromFile(PromiseFileStorage storage) {
+        List<Promise> loadedPromises = storage.loadPromises();
+        profile.loadPromises(loadedPromises);
+    }
+
+    // Profil ichidagi barcha vazifalarni faylga saqlaydi.
+    private void saveToFile() {
+        storage.savePromises(profile.getPromises());
     }
 
     public boolean isOverdueCheckerShutdown() {

@@ -4,10 +4,17 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
+import  model.Promise;
 
 public class LifeProfile {
     private final String name;
     private final List<Promise> promises = new ArrayList<>();
+
+    // Fayldan yuklangan vazifalarni profilga joylashtiradi.
+    public void loadPromises(List<Promise> loadedPromises) {
+        promises.clear();              // Eski ro'yxatni tozalaydi.
+        promises.addAll(loadedPromises); // Yangi vazifalarni qo'shadi.
+    }
 
     public LifeProfile(String name) {
         this.name = name;

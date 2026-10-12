@@ -1,19 +1,43 @@
 import model.Promise;
 import model.LifeProfile;
 import model.Priority;
+import model.PromiseCategory;
+import model.PromiseStatus;
+
+
+import service.PromiseFileStorage;
+import service.PromiseService;
+
 import java.time.LocalDateTime;
+
 import java.util.List;
 import java.util.Scanner;
-import model.PromiseStatus;
+import java.util.Comparator;
+import java.util.ArrayList;
+
 import service.PromiseService;
+
 import util.InputHelper;
-import model.PromiseCategory;
+
+
 
 public class Main {
     public static void main(String[] args) {
         var scanner = new Scanner(System.in);
         InputHelper input = new InputHelper(scanner);
         LifeProfile profile = new LifeProfile("Shaxboz");
+        var service = new PromiseService(profile);
+
+        PromiseFileStorage storage = new PromiseFileStorage();
+        // Fayldagi vazifalarni yuklash
+        service.loadPromisesFromFile(storage);
+
+        // Tekshiruv: fayldan yuklangandan keyin nechta vazifa bor?
+        System.out.println(
+                "Fayldan yuklangandan keyin: "
+                        + profile.getPromises().size()
+                        + " ta vazifa"
+        );
 
         var promise1 = new Promise(
                 "kitob o'qish",
@@ -39,33 +63,19 @@ public class Main {
                 PromiseCategory.STUDY
         );
 
-//        Promise testPromise = new Promise(
-//                "Test vazifa",
-//                "Statuslarni tekshirish",
-//                LocalDateTime.of(2026, 10, 20, 18, 0),
-//                PromiseCategory.STUDY
-//        );
-//
-//        System.out.println("Boshlang'ich: " + testPromise.getStatus());
-//
-//        System.out.println("Complete: " + testPromise.complete());
-//        System.out.println("Status: " + testPromise.getStatus());
-//
-//        System.out.println("Start: " + testPromise.start());
-//        System.out.println("Status: " + testPromise.getStatus());
-//
-//        System.out.println("Complete: " + testPromise.complete());
-//        System.out.println("Status: " + testPromise.getStatus());
-//
-//        System.out.println("Cancel: " + testPromise.cancel());
-//        System.out.println("Status: " + testPromise.getStatus());
+        if (profile.getPromises().isEmpty()) {
+            service.addPromise(promise1);
+            service.addPromise(promise2);
+            service.addPromise(promise3);
+            service.addPromise(promise4);
+        }
 
-        var service = new PromiseService(profile);
-        service.addPromise(promise1);
-        service.addPromise(promise2);
-        service.addPromise(promise3);
-        service.addPromise(promise4);
-//        service.addPromise(testPromise);
+        // Tekshiruv: boshlang'ich vazifalardan keyin nechta?
+        System.out.println(
+                "Boshlang'ich vazifalardan keyin: "
+                        + profile.getPromises().size()
+                        + " ta vazifa"
+        );
 
 //      Avtomatik overdue ni ishga tushirish
         service.startOverdueChecker();
@@ -90,6 +100,8 @@ public class Main {
             System.out.println("15. Vazifalarni deadline bo'yicha saralash");
             System.out.println("16. Vazifalarni kategoriya va holat bo'yicha filtrlash");
             System.out.println("17. Vazifani nomi bo'yicha qidirish");
+            System.out.println("18. Vazifalarni ustuvorlik bo'yicha saralash");
+            System.out.println("19. Ustuvorlik va deadline bo'yicha saralash");
             System.out.println("0. Chiqish");
 
             String choice = input.readRequiredString("Tanlang: ");
@@ -149,7 +161,13 @@ public class Main {
                 case "17": // nomi bo'yicha qidirish
                     searchPromisesByTitle(service, input);
                     break;
-                default: System.out.println("Noto'g'ri tanlov (0 - 15) oralig'ida tanlang");
+                case "18":
+                    showPromisesSortedByPriority(service);
+                    break;
+                case "19":
+                    showPromisesSortedByPriorityAndDeadline(service);
+                    break;
+                default: System.out.println("Noto'g'ri tanlov (0 - 18) oralig'ida tanlang");
 
             }
         }
@@ -216,7 +234,6 @@ public class Main {
             System.out.println("Xatolik: Bunday ID mavjud emas.");
         }
     }
-
 
     private static void updatePromise(PromiseService service, InputHelper input) {
         // O'zgartiriladigan vazifaning ID raqamini olamiz.
@@ -294,7 +311,6 @@ public class Main {
         }
     }
 
-
     private static void addPromise(PromiseService service, InputHelper input) {
         System.out.println("Yangi vazifa qo'shing!");
 
@@ -333,15 +349,15 @@ public class Main {
             System.out.println("Priority: " + promise.getPriority());
 
             // Sinov uchun ustuvorliklarni belgilaymiz.
-            Promise javaPromise = service.findPromise("java");
-            if (javaPromise != null) {
-                javaPromise.setPriority(Priority.HIGH);
-            }
-
-            Promise bookPromise = service.findPromise("kitob o'qish");
-            if (bookPromise != null) {
-                bookPromise.setPriority(Priority.LOW);
-            }
+//            Promise javaPromise = service.findPromise("java");
+//            if (javaPromise != null) {
+//                javaPromise.setPriority(Priority.HIGH);
+//            }
+//
+//            Promise bookPromise = service.findPromise("kitob o'qish");
+//            if (bookPromise != null) {
+//                bookPromise.setPriority(Priority.LOW);
+//            }
 
         } catch (IllegalArgumentException e) {
             System.out.println("Xatolik: " + e.getMessage());
@@ -506,9 +522,84 @@ public class Main {
 
         // Har bir vazifani navbat bilan ekranga chiqaramiz.
         for (Promise promise : promises) {
-            System.out.println(promise);
+            System.out.println(
+                    "ID: " + promise.getId() +
+                            " | Nomi: " + promise.getTitle() +
+                            " | Deadline: " + promise.getDeadline() +
+                            " | Priority: " + promise.getPriority() +
+                            " | Status: " + promise.getStatus()
+            );
         }
     }
+
+    private static void showPromisesSortedByPriorityAndDeadline(PromiseService service) {
+
+        List<Promise> promises =
+                service.getPromisesSortedByPriorityAndDeadline();
+
+        if (promises.isEmpty()) {
+            System.out.println("Hozircha vazifalar mavjud emas.");
+            return;
+        }
+
+        System.out.println("===== USTUVORLIK VA DEADLINE BO'YICHA =====");
+
+        for (Promise promise : promises) {
+            System.out.println(
+                    "ID: " + promise.getId()
+                            + " | Nomi: " + promise.getTitle()
+                            + " | Priority: " + promise.getPriority()
+                            + " | Deadline: " + promise.getDeadline()
+                            + " | Status: " + promise.getStatus()
+            );
+        }
+    }
+
+    private static void showPromisesSortedByPriority(PromiseService service) {
+
+        List<Promise> promises = service.getPromisesSortedByPriority();
+
+        if (promises.isEmpty()) {
+            System.out.println("Hozircha vazifalar mavjud emas.");
+            return;
+        }
+
+        System.out.println("===== USTUVORLIK BO'YICHA VAZIFALAR =====");
+
+        for (Promise promise : promises) {
+            System.out.println(
+                    "ID: " + promise.getId()
+                            + " | Nomi: " + promise.getTitle()
+                            + " | Priority: " + promise.getPriority()
+                            + " | Deadline: " + promise.getDeadline()
+                            + " | Status: " + promise.getStatus()
+            );
+        }
+    }
+
+//    public List<Promise> getPromisesSortedByPriorityAndDeadline() {
+//
+//        // Barcha vazifalardan nusxa olamiz.
+//        List<Promise> sortedPromises = new ArrayList<>(getAllPromises());
+//
+//        // Birinchi mezon: HIGH -> MEDIUM -> LOW.
+//        // Ikkinchi mezon: deadline, ya'ni eng yaqin muddat birinchi.
+//        sortedPromises.sort(
+//                Comparator
+//                        .comparingInt((Promise promise) -> {
+//                            if (promise.getPriority() == Priority.HIGH) {
+//                                return 1;
+//                            } else if (promise.getPriority() == Priority.MEDIUM) {
+//                                return 2;
+//                            } else {
+//                                return 3;
+//                            }
+//                        })
+//                        .thenComparing(Promise::getDeadline)
+//        );
+//
+//        return sortedPromises;
+//    }
 
 //    private static void showPromisesByCategoryAndStatus(PromiseService service, InputHelper input) {
 //
@@ -630,5 +721,7 @@ public class Main {
             );
         }
     }
+
+
 
 }
