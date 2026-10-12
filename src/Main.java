@@ -24,7 +24,7 @@ public class Main {
         var promise2 = new Promise(
                 "darslarni qilish",
                 "OOP ni o'rganish",
-                LocalDateTime.of(2026, 10, 10, 8, 30).plusDays(1),
+                LocalDateTime.of(2026, 10, 20, 8, 30).plusDays(1),
                 PromiseCategory.STUDY);
 
         var promise3 = new Promise(
@@ -150,19 +150,10 @@ public class Main {
                     searchPromisesByTitle(service, input);
                     break;
                 default: System.out.println("Noto'g'ri tanlov (0 - 15) oralig'ida tanlang");
-            }
 
-            System.out.println("===== Ustuvorlik bo'yicha vazifalar =====");
-
-            for (Promise promise : service.getPromisesSortedByPriority()) {
-                System.out.println(
-                        promise.getPriority() + " | " + promise
-                );
             }
         }
     }
-
-
 
     private static void showAllPromises(PromiseService service) {
         List<Promise> promises = service.getAllPromises();
@@ -639,7 +630,5 @@ public class Main {
             );
         }
     }
-
-
 
 }

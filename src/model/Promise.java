@@ -42,6 +42,28 @@ public class Promise {
 
 
     }
+    // 2-konstruktor: oldingi vazifani tiklash
+    public Promise(
+            int id,
+            String title,
+            String description,
+            LocalDateTime deadline,
+            PromiseStatus status,
+            PromiseCategory category,
+            Priority priority
+    ) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.deadline = deadline;
+        this.status = status;
+        this.category = category;
+        this.priority = priority;
+
+        if (id >= nextId) {
+            nextId = id + 1;
+        }
+    }
 
 //    deadline larni tekshirish
     private LocalDateTime validateDeadline(LocalDateTime deadline) {
