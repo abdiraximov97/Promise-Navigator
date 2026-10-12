@@ -12,18 +12,17 @@ import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.Scanner;
-import java.util.Comparator;
-import java.util.ArrayList;
-
-import service.PromiseService;
-
 import util.InputHelper;
+import database.DatabaseManager;
+
+
 
 
 
 public class Main {
     public static void main(String[] args) {
         var scanner = new Scanner(System.in);
+        DatabaseManager.createTable();
         InputHelper input = new InputHelper(scanner);
         LifeProfile profile = new LifeProfile("Shaxboz");
         var service = new PromiseService(profile);
@@ -33,11 +32,11 @@ public class Main {
         service.loadPromisesFromFile(storage);
 
         // Tekshiruv: fayldan yuklangandan keyin nechta vazifa bor?
-        System.out.println(
-                "Fayldan yuklangandan keyin: "
-                        + profile.getPromises().size()
-                        + " ta vazifa"
-        );
+//        System.out.println(
+//                "Fayldan yuklangandan keyin: "
+//                        + profile.getPromises().size()
+//                        + " ta vazifa"
+//        );
 
         var promise1 = new Promise(
                 "kitob o'qish",
@@ -71,11 +70,11 @@ public class Main {
         }
 
         // Tekshiruv: boshlang'ich vazifalardan keyin nechta?
-        System.out.println(
-                "Boshlang'ich vazifalardan keyin: "
-                        + profile.getPromises().size()
-                        + " ta vazifa"
-        );
+//        System.out.println(
+//                "Boshlang'ich vazifalardan keyin: "
+//                        + profile.getPromises().size()
+//                        + " ta vazifa"
+//        );
 
 //      Avtomatik overdue ni ishga tushirish
         service.startOverdueChecker();

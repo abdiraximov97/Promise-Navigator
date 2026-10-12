@@ -11,45 +11,86 @@ import java.sql.ResultSet;
 public class DatabaseTest {
 
     public static void main(String[] args) {
-        // SQLite bazasi fayliga ulanish manzili.
         String url = "jdbc:sqlite:life_navigator.db";
+        // Qqaysi vazifani statusini o'zgartirishni belgilaymiz
+        String sql = " UPDATE promises SET status = ? WHERE id = ? ";
 
-        // Barcha vazifalarni o'qish uchun SQL so'rovi
-        String sql = "SELECT * FROM promises";
-
-        // Bazaga ulanib resurslarni avto matik yopamiz
         try (Connection connection = DriverManager.getConnection(url);
-            // SQL so'rovini tayyorlaymiz
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            //SELECT so'rovini bajarib natijani olamiz
-            ResultSet resultSet = preparedStatement.executeQuery()){
-            //Natijalarni har bir qatorini navbat bilan o'qiymiz
-            while (resultSet.next()) {
-                // Har bir ustundagi qiymatlarni olamiz.
-                int id = resultSet.getInt("id");
-                String title = resultSet.getString("title");
-                String description = resultSet.getString("description");
-                String deadline = resultSet.getString("deadline");
-                String status = resultSet.getString("status");
-                String category = resultSet.getString("category");
-                String priority = resultSet.getString("priority");
+            PreparedStatement statement = connection.prepareStatement(sql)){
 
-                // Bitta vazifa ma'lumotlarini konsolga chiqaramiz.
-                System.out.println("========== VAZIFA ==========");
-                System.out.println("ID: " + id);
-                System.out.println("Nomi: " + title);
-                System.out.println("Tavsifi: " + description);
-                System.out.println("Deadline: " + deadline);
-                System.out.println("Status: " + status);
-                System.out.println("Kategoriya: " + category);
-                System.out.println("Ustuvorlik: " + priority);
+            // birinchi ? o'rniga yangi status beramiz
+//            statement.setString(1, "IN_PROGRESS");
+
+            // o'chirilishi kerak bo'lgan vazifa ID
+            statement.setInt(1, 1);
+
+            // ikkinchi ? o'rniga vazifa ID beramiz
+            statement.setInt(2, 1);
+
+            int rowsDelete = statement.executeUpdate();
+
+            if (rowsDelete > 0) {
+                System.out.println("Vazifa muvaffaqiyatli o'chirildi!");
+            } else {
+                System.out.println("Bunday ID bilan vazifa topilmadi");
             }
+
+            //so'rovni bajarib o'zgartirgan qatorlar sonini olamiz
+//            int rowsUpdated = statement.executeUpdate();
+//            if (rowsUpdated > 0) {
+//                System.out.println("Vazifa statusi muvaffaqiyatli o'zgartirildi!");
+//            } else {
+//                System.out.println("Bunday ID bilan vazifa topilmadi");
+//            }
         } catch (SQLException e) {
-            // SQL xatosi yuz bersa, tafsilotlarini chiqaramiz.
-            System.out.println("Vazifani o'qishishda xatolik yuz berdi:");
+            System.out.println("O'chirishda xatolik yuz berdi:");
             e.printStackTrace();
+
+//            System.out.println("Statusni o'zgartirishda xatolik yuz berdi:");
+//            e.printStackTrace();
         }
     }
+
+//    public static void main(String[] args) {
+//        // SQLite bazasi fayliga ulanish manzili.
+//        String url = "jdbc:sqlite:life_navigator.db";
+//
+//        // Barcha vazifalarni o'qish uchun SQL so'rovi
+//        String sql = "SELECT * FROM promises";
+//
+//        // Bazaga ulanib resurslarni avto matik yopamiz
+//        try (Connection connection = DriverManager.getConnection(url);
+//            // SQL so'rovini tayyorlaymiz
+//            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+//            //SELECT so'rovini bajarib natijani olamiz
+//            ResultSet resultSet = preparedStatement.executeQuery()){
+//            //Natijalarni har bir qatorini navbat bilan o'qiymiz
+//            while (resultSet.next()) {
+//                // Har bir ustundagi qiymatlarni olamiz.
+//                int id = resultSet.getInt("id");
+//                String title = resultSet.getString("title");
+//                String description = resultSet.getString("description");
+//                String deadline = resultSet.getString("deadline");
+//                String status = resultSet.getString("status");
+//                String category = resultSet.getString("category");
+//                String priority = resultSet.getString("priority");
+//
+//                // Bitta vazifa ma'lumotlarini konsolga chiqaramiz.
+//                System.out.println("========== VAZIFA ==========");
+//                System.out.println("ID: " + id);
+//                System.out.println("Nomi: " + title);
+//                System.out.println("Tavsifi: " + description);
+//                System.out.println("Deadline: " + deadline);
+//                System.out.println("Status: " + status);
+//                System.out.println("Kategoriya: " + category);
+//                System.out.println("Ustuvorlik: " + priority);
+//            }
+//        } catch (SQLException e) {
+//            // SQL xatosi yuz bersa, tafsilotlarini chiqaramiz.
+//            System.out.println("Vazifani o'qishishda xatolik yuz berdi:");
+//            e.printStackTrace();
+//        }
+//    }
 
 //    public static void main(String[] args) {
 //
