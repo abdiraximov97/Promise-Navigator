@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Scanner;
 import util.InputHelper;
 import database.DatabaseManager;
+import repository.PromiseRepository;
 
 
 
@@ -41,7 +42,7 @@ public class Main {
         var promise1 = new Promise(
                 "kitob o'qish",
                 "10 sahifa",
-                LocalDateTime.of(2026,10,12, 18, 30),
+                LocalDateTime.of(2026,10,22, 18, 30),
                 PromiseCategory.STUDY);
 
         var promise2 = new Promise(
@@ -53,7 +54,7 @@ public class Main {
         var promise3 = new Promise(
                 "Bozorga borish",
                 "Atir olish kerak",
-                LocalDateTime.of(2026, 10, 13, 10, 0),
+                LocalDateTime.of(2026, 10, 15, 10, 0),
                 PromiseCategory.OTHER);
         var promise4 = new Promise(
                 "Test",
@@ -69,12 +70,22 @@ public class Main {
             service.addPromise(promise4);
         }
 
-        // Tekshiruv: boshlang'ich vazifalardan keyin nechta?
-//        System.out.println(
-//                "Boshlang'ich vazifalardan keyin: "
-//                        + profile.getPromises().size()
-//                        + " ta vazifa"
-//        );
+
+        PromiseRepository repository = new PromiseRepository();
+
+        Promise promise = new Promise(
+                "SQLite yangi sinov",
+                "Promise obyektini saqlash",
+                LocalDateTime.now().plusDays(2),
+                PromiseCategory.STUDY
+        );
+
+        boolean saved = repository.save(promise);
+
+        System.out.println("Saqlash natijasi: " + saved);
+
+        repository.printAll();
+
 
 //      Avtomatik overdue ni ishga tushirish
         service.startOverdueChecker();
