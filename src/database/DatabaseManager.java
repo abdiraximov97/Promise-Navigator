@@ -1,4 +1,3 @@
-
 package database;
 
 import java.sql.Connection;
@@ -8,17 +7,23 @@ import java.sql.Statement;
 
 public class DatabaseManager {
 
-    // SQLite bazasi saqlanadigan fayl
-    private static final String URL = "jdbc:sqlite:life_navigator.db";
+    // Sozlamalarni environment variables orqali berish mumkin.
+    private static final String URL = setting(
+            "DB_URL", "jdbc:postgresql://localhost:5432/promise_navigator"
+    );
+    private static final String USER = setting("DB_USER", "postgres");
+    private static final String PASSWORD = setting("DB_PASSWORD", "postgres");
 
-    // Baza bilan ulanishni qaytaradi
-    public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL);
+    private static String setting(String name, String defaultValue) {
+        String value = System.getenv(name);
+        return value == null || value.isBlank() ? defaultValue : value;
     }
 
-    // Jadval mavjud bo'lmasa, uni yaratadi
-    public static void createTable() {
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
 
+    public static void createTable() {
         String sql = """
                 CREATE TABLE IF NOT EXISTS promises (
                     id INTEGER PRIMARY KEY,
@@ -31,17 +36,15 @@ public class DatabaseManager {
                 )
                 """;
 
-        // Resurslar avtomatik yopiladi
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
-
-            // SQL jadval yaratish buyrug'ini bajaradi
             statement.execute(sql);
-
-            System.out.println("SQLite jadvali tayyor.");
-
+            System.out.println("PostgreSQL jadvali tayyor.");
         } catch (SQLException e) {
-            System.out.println("Jadval yaratishda xatolik: " + e.getMessage());
+            throw new IllegalStateException(
+                    "PostgreSQL'ga ulanish yoki jadval yaratishda xatolik: "
+                            + e.getMessage(), e
+            );
         }
     }
 }

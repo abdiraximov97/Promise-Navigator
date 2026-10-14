@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import  model.Promise;
 
 public class LifeProfile {
+
     private final String name;
+
     private final List<Promise> promises = new ArrayList<>();
 
     // Fayldan yuklangan vazifalarni profilga joylashtiradi.

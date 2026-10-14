@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.Comparator;
+import repository.PromiseRepository;
 
 
 public class PromiseService {
@@ -27,12 +28,25 @@ public class PromiseService {
         this.storage = new PromiseFileStorage();
     }
 
-    public void addPromise(Promise promise) {
-        // Vazifani profilga qo'shamiz.
-        profile.addPromise(promise);
-        // Faylga saqlaymiz.
-        saveToFile();
-    }
+    public boolean addPromise(Promise promise) {
+            // Avval vazifani SQLite bazasiga saqlaymiz.
+            boolean saved = repository.save(promise);
+
+            // Bazaga saqlanmasa, boshqa joylarni o'zgartirmaymiz.
+            if (!saved) {
+                return false;
+            }
+
+            // Vazifani profilga qo'shamiz.
+            profile.addPromise(promise);
+
+            // Faylga ham saqlaymiz.
+            saveToFile();
+
+            return true;
+        }
+
+    private final PromiseRepository repository = new PromiseRepository();
 
     public List<Promise> getAllPromises() {
         return profile.getPromises();
@@ -52,6 +66,9 @@ public class PromiseService {
 
     public Promise removePromise(int id) {
 //        ID bo'yicha vazifalarni o'chiramiz
+        if (!repository.delete(id)) {
+            return null;
+        }
         Promise removed = profile.removePromise(id);
 //        Vazifa haqiqatan o'chirilgan bo'lsa faylni yangilaymiz
         if (removed != null) {
@@ -70,6 +87,10 @@ public class PromiseService {
                                 PromiseCategory newCategory) {
         // Vazifani yangilashga harakat qilamiz.
         boolean updated =  profile.updatePromise(id, newTitle, newDescription, newDeadline, newCategory);
+        if (updated) {
+            Promise promise = profile.findPromiseById(id);
+            updated = promise != null && repository.update(promise);
+        }
         // Yangilash muvaffaqiyatli bo'lsa, faylga saqlaymiz.
         if (updated) {
             saveToFile();
@@ -80,18 +101,9 @@ public class PromiseService {
 
     public boolean startPromise(int id) {
         Promise promise = findPromiseById(id);
-        if (promise != null) {
-            return promise.start();
-        }
-        // Vazifani boshlashga harakat qilamiz.
+        if (promise == null) return false;
         boolean started = promise.start();
-
-        // Faqat muvaffaqiyatli boshlangan bo'lsa, saqlaymiz.
-        if (started) {
-            saveToFile();
-        }
-
-        return started;
+        return started && repository.update(promise);
     }
 
     public boolean completePromise(int id) {
@@ -101,6 +113,8 @@ public class PromiseService {
         }
         // Vazifani bajarilgan deb belgilaymiz.
         boolean completed = promise.complete();
+
+        if (completed && !repository.update(promise)) return false;
 
         // Bajarish muvaffaqiyatli bo'lsa, faylga saqlaymiz.
         if (completed) {
@@ -117,6 +131,7 @@ public class PromiseService {
         }
         // Vazifani bekor qilishga harakat qilamiz.
         boolean cancelled = promise.cancel();
+        if (cancelled && !repository.update(promise)) return false;
         if (cancelled) {
             saveToFile();
         }
@@ -527,6 +542,10 @@ public class PromiseService {
     public void loadPromisesFromFile(PromiseFileStorage storage) {
         List<Promise> loadedPromises = storage.loadPromises();
         profile.loadPromises(loadedPromises);
+    }
+
+    public void loadPromisesFromDatabase() {
+        profile.loadPromises(repository.findAll());
     }
 
     // Profil ichidagi barcha vazifalarni faylga saqlaydi.

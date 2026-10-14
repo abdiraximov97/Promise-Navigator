@@ -11,45 +11,80 @@ import java.sql.ResultSet;
 public class DatabaseTest {
 
     public static void main(String[] args) {
+
+        // SQLite bazasiga ulanish manzili.
         String url = "jdbc:sqlite:life_navigator.db";
-        // Qqaysi vazifani statusini o'zgartirishni belgilaymiz
-        String sql = " UPDATE promises SET status = ? WHERE id = ? ";
 
+        // Bazadagi jadvallar ro'yxatini olish.
+        String sql = "PRAGMA table_info(promises)";
+
+        // Bazaga ulanib, jadvallarni tekshiramiz.
         try (Connection connection = DriverManager.getConnection(url);
-            PreparedStatement statement = connection.prepareStatement(sql)){
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
 
-            // birinchi ? o'rniga yangi status beramiz
-//            statement.setString(1, "IN_PROGRESS");
+            // Qaysi bazaga ulanganini chiqaramiz.
+            System.out.println("Ulanish muvaffaqiyatli!");
 
-            // o'chirilishi kerak bo'lgan vazifa ID
-            statement.setInt(1, 1);
-
-            // ikkinchi ? o'rniga vazifa ID beramiz
-            statement.setInt(2, 1);
-
-            int rowsDelete = statement.executeUpdate();
-
-            if (rowsDelete > 0) {
-                System.out.println("Vazifa muvaffaqiyatli o'chirildi!");
-            } else {
-                System.out.println("Bunday ID bilan vazifa topilmadi");
+            // Topilgan jadvallarni chiqaramiz.
+            while (resultSet.next()) {
+                System.out.println(
+                        "Ustun: " + resultSet.getString("name")
+                );
             }
 
-            //so'rovni bajarib o'zgartirgan qatorlar sonini olamiz
-//            int rowsUpdated = statement.executeUpdate();
-//            if (rowsUpdated > 0) {
-//                System.out.println("Vazifa statusi muvaffaqiyatli o'zgartirildi!");
+        } catch (SQLException e) {
+            System.out.println("SQLite xatosi: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.out.println(
+                "Database manzili: " +
+                        java.nio.file.Path.of("life_navigator.db")
+                                .toAbsolutePath()
+        );
+    }
+
+//    public static void main(String[] args) {
+//        String url = "jdbc:sqlite:life_navigator.db";
+//        // Qqaysi vazifani statusini o'zgartirishni belgilaymiz
+//        String sql = " UPDATE promises SET status = ? WHERE id = ? ";
+//
+//        try (Connection connection = DriverManager.getConnection(url);
+//            PreparedStatement statement = connection.prepareStatement(sql)){
+//
+//            // birinchi ? o'rniga yangi status beramiz
+////            statement.setString(1, "IN_PROGRESS");
+//
+//            // o'chirilishi kerak bo'lgan vazifa ID
+//            statement.setInt(1, 1);
+//
+//            // ikkinchi ? o'rniga vazifa ID beramiz
+//            statement.setInt(2, 1);
+//
+//            int rowsDelete = statement.executeUpdate();
+//
+//            if (rowsDelete > 0) {
+//                System.out.println("Vazifa muvaffaqiyatli o'chirildi!");
 //            } else {
 //                System.out.println("Bunday ID bilan vazifa topilmadi");
 //            }
-        } catch (SQLException e) {
-            System.out.println("O'chirishda xatolik yuz berdi:");
-            e.printStackTrace();
-
-//            System.out.println("Statusni o'zgartirishda xatolik yuz berdi:");
+//
+//            //so'rovni bajarib o'zgartirgan qatorlar sonini olamiz
+////            int rowsUpdated = statement.executeUpdate();
+////            if (rowsUpdated > 0) {
+////                System.out.println("Vazifa statusi muvaffaqiyatli o'zgartirildi!");
+////            } else {
+////                System.out.println("Bunday ID bilan vazifa topilmadi");
+////            }
+//        } catch (SQLException e) {
+//            System.out.println("O'chirishda xatolik yuz berdi:");
 //            e.printStackTrace();
-        }
-    }
+//
+////            System.out.println("Statusni o'zgartirishda xatolik yuz berdi:");
+////            e.printStackTrace();
+//        }
+//    }
 
 //    public static void main(String[] args) {
 //        // SQLite bazasi fayliga ulanish manzili.

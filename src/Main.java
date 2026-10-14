@@ -5,7 +5,6 @@ import model.PromiseCategory;
 import model.PromiseStatus;
 
 
-import service.PromiseFileStorage;
 import service.PromiseService;
 
 import java.time.LocalDateTime;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Scanner;
 import util.InputHelper;
 import database.DatabaseManager;
-import repository.PromiseRepository;
 
 
 
@@ -28,9 +26,8 @@ public class Main {
         LifeProfile profile = new LifeProfile("Shaxboz");
         var service = new PromiseService(profile);
 
-        PromiseFileStorage storage = new PromiseFileStorage();
-        // Fayldagi vazifalarni yuklash
-        service.loadPromisesFromFile(storage);
+        // Vazifalarni PostgreSQL'dan yuklash
+        service.loadPromisesFromDatabase();
 
         // Tekshiruv: fayldan yuklangandan keyin nechta vazifa bor?
 //        System.out.println(
@@ -38,6 +35,8 @@ public class Main {
 //                        + profile.getPromises().size()
 //                        + " ta vazifa"
 //        );
+
+
 
         var promise1 = new Promise(
                 "kitob o'qish",
@@ -70,22 +69,8 @@ public class Main {
             service.addPromise(promise4);
         }
 
-
-        PromiseRepository repository = new PromiseRepository();
-
-        Promise promise = new Promise(
-                "SQLite yangi sinov",
-                "Promise obyektini saqlash",
-                LocalDateTime.now().plusDays(2),
-                PromiseCategory.STUDY
-        );
-
-        boolean saved = repository.save(promise);
-
-        System.out.println("Saqlash natijasi: " + saved);
-
-        repository.printAll();
-
+        // Dastur ishga tushganda PostgreSQL'dagi vazifalarni ko'rsatish.
+        showAllPromises(service);
 
 //      Avtomatik overdue ni ishga tushirish
         service.startOverdueChecker();
@@ -351,7 +336,15 @@ public class Main {
             promise.setPriority(priority);
 
             // 5. Vazifani faqat bir marta qo'shamiz.
-            service.addPromise(promise);
+            boolean added = service.addPromise(promise);
+
+            if (added) {
+                System.out.println("Vazifa SQLite va faylga saqlandi!");
+                System.out.println("Deadline: " + promise.getDeadline());
+                System.out.println("Priority: " + promise.getPriority());
+            } else {
+                System.out.println("Xatolik: vazifa SQLite bazasiga saqlanmadi.");
+            }
 
             System.out.println("Vazifa muvaffaqiyatli qo'shildi!");
 
