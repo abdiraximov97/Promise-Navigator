@@ -9,6 +9,7 @@ public class Promise {
     private String title;
     private String description;
     private LocalDateTime deadline;
+    private LocalDateTime updatedAt;
     private PromiseStatus status;
     // Vazifaning muddati o'tishidan oldingi holatini saqlaydi.
     private PromiseStatus statusBeforeOverdue;
@@ -259,6 +260,14 @@ public class Promise {
             statusBeforeOverdue = null;
         }
 
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     // Testda vaqt manbasini almashtirish uchun.

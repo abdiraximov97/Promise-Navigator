@@ -79,17 +79,19 @@ public class PromiseRepository {
         return true;
     }
 
-
-
     public List<Promise> findAll() {
-        String sql = "SELECT id, title, description, deadline, status, category, priority "
+        String sql = "SELECT id, title, description, deadline, status, "
+                + "category, priority, updated_at "
                 + "FROM promises ORDER BY id ASC";
+
         List<Promise> promises = new ArrayList<>();
+
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet resultSet = statement.executeQuery()) {
+
             while (resultSet.next()) {
-                promises.add(new Promise(
+                Promise promise = new Promise(
                         resultSet.getInt("id"),
                         resultSet.getString("title"),
                         resultSet.getString("description"),
@@ -97,14 +99,27 @@ public class PromiseRepository {
                         PromiseStatus.valueOf(resultSet.getString("status")),
                         PromiseCategory.valueOf(resultSet.getString("category")),
                         Priority.valueOf(resultSet.getString("priority"))
-                ));
+                );
+
+                Timestamp updatedTimestamp = resultSet.getTimestamp("updated_at");
+
+                if (updatedTimestamp != null) {
+                    promise.setUpdatedAt(updatedTimestamp.toLocalDateTime());
+                }
+
+                promises.add(promise);
             }
+
         } catch (SQLException e) {
-            throw new IllegalStateException("PostgreSQL'dan vazifalarni o'qib bo'lmadi: "
-                    + e.getMessage(), e);
+            throw new IllegalStateException(
+                    "PostgreSQL'dan vazifalarni o'qib bo'lmadi: "
+                            + e.getMessage(), e
+            );
         }
+
         return promises;
     }
+
 
     public boolean update(Promise promise) {
         String sql = "UPDATE promises SET title=?, description=?, deadline=?, status=?, "
