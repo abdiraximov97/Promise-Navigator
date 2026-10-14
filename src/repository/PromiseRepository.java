@@ -14,12 +14,14 @@ import java.util.List;
 import model.PromiseCategory;
 import model.PromiseStatus;
 import model.Priority;
+import java.sql.Timestamp;
 
 public class PromiseRepository {
 
     // Bitta vadani bazaga saqlash
-    public boolean save(
-            int id,
+
+
+    public int save(
             String title,
             String description,
             String deadline,
@@ -28,38 +30,39 @@ public class PromiseRepository {
             String priority
     ) {
         String sql = """
-                INSERT INTO promises
-                (id, title, description, deadline, status, category, priority)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """;
+            INSERT INTO promises
+            (title, description, deadline, status, category, priority)
+            VALUES (?, ?, ?, ?, ?, ?)
+            RETURNING id
+            """;
 
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            statement.setInt(1, id);
-            statement.setString(2, title);
-            statement.setString(3, description);
-            statement.setString(4, deadline);
-            statement.setString(5, status);
-            statement.setString(6, category);
-            statement.setString(7, priority);
+            statement.setString(1, title);
+            statement.setString(2, description);
+            statement.setTimestamp(3, Timestamp.valueOf(LocalDateTime.parse(deadline)));
+            statement.setString(4, status);
+            statement.setString(5, category);
+            statement.setString(6, priority);
 
-            return statement.executeUpdate() > 0;
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("id");
+                }
+            }
 
-        } catch (SQLException e) {
+            return -1;
+
+        } catch (SQLException | java.time.format.DateTimeParseException e) {
             System.out.println("PostgreSQL saqlash xatosi: " + e.getMessage());
             e.printStackTrace();
-            return false;
-//            System.out.println("SQLite saqlash xatosi:");
-//            e.printStackTrace();
-//            return false;
+            return -1;
         }
     }
 
-
     public boolean save(Promise promise) {
-        return save(
-                promise.getId(),
+        int databaseId = save(
                 promise.getTitle(),
                 promise.getDescription(),
                 promise.getDeadline().toString(),
@@ -67,7 +70,16 @@ public class PromiseRepository {
                 promise.getCategory().name(),
                 promise.getPriority().name()
         );
+
+        if (databaseId <= 0) {
+            return false;
+        }
+
+        promise.setId(databaseId);
+        return true;
     }
+
+
 
     public List<Promise> findAll() {
         String sql = "SELECT id, title, description, deadline, status, category, priority "
@@ -81,7 +93,7 @@ public class PromiseRepository {
                         resultSet.getInt("id"),
                         resultSet.getString("title"),
                         resultSet.getString("description"),
-                        LocalDateTime.parse(resultSet.getString("deadline")),
+                        resultSet.getTimestamp("deadline").toLocalDateTime(),
                         PromiseStatus.valueOf(resultSet.getString("status")),
                         PromiseCategory.valueOf(resultSet.getString("category")),
                         Priority.valueOf(resultSet.getString("priority"))
@@ -101,7 +113,7 @@ public class PromiseRepository {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, promise.getTitle());
             statement.setString(2, promise.getDescription());
-            statement.setString(3, promise.getDeadline().toString());
+            statement.setTimestamp(3, Timestamp.valueOf(promise.getDeadline()));
             statement.setString(4, promise.getStatus().name());
             statement.setString(5, promise.getCategory().name());
             statement.setString(6, promise.getPriority().name());

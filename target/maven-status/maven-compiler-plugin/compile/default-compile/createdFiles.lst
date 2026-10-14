@@ -1,0 +1,13 @@
+model/LifeProfile.class
+repository/PromiseRepository.class
+model/PromiseStatus.class
+database/DatabaseConnectionTest.class
+database/Database.class
+model/PromiseCategory.class
+service/PromiseFileStorage.class
+Main.class
+model/Promise.class
+database/DatabaseManager.class
+util/InputHelper.class
+model/Priority.class
+service/PromiseService.class

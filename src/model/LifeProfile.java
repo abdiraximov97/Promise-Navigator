@@ -31,7 +31,7 @@ public class LifeProfile {
         throw new IllegalArgumentException("Vazifa 'null' bo'lishi mumkin emas.");
     }
     promises.add(promise);
-}
+    }
 
     public List<Promise> getPromises() {
         return Collections.unmodifiableList(promises);

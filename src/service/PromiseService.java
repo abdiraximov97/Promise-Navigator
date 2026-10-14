@@ -23,13 +23,15 @@ public class PromiseService {
     // Vazifalarni faylga saqlash va fayldan yuklash uchun obyekt.
     private final PromiseFileStorage storage;
 
+    private final PromiseRepository repository = new PromiseRepository();
+
     public PromiseService(LifeProfile profile) {
         this.profile = profile;
         this.storage = new PromiseFileStorage();
     }
 
     public boolean addPromise(Promise promise) {
-            // Avval vazifani SQLite bazasiga saqlaymiz.
+            // Avval vazifani PostgreSQL bazasiga saqlaymiz.
             boolean saved = repository.save(promise);
 
             // Bazaga saqlanmasa, boshqa joylarni o'zgartirmaymiz.
@@ -45,8 +47,6 @@ public class PromiseService {
 
             return true;
         }
-
-    private final PromiseRepository repository = new PromiseRepository();
 
     public List<Promise> getAllPromises() {
         return profile.getPromises();
@@ -80,23 +80,67 @@ public class PromiseService {
     }
 
     public boolean updatePromise(
-                                int id,
-                                String newTitle,
-                                String newDescription,
-                                LocalDateTime newDeadline,
-                                PromiseCategory newCategory) {
-        // Vazifani yangilashga harakat qilamiz.
-        boolean updated =  profile.updatePromise(id, newTitle, newDescription, newDeadline, newCategory);
-        if (updated) {
-            Promise promise = profile.findPromiseById(id);
-            updated = promise != null && repository.update(promise);
+            int id,
+            String newTitle,
+            String newDescription,
+            LocalDateTime newDeadline,
+            PromiseCategory newCategory) {
+
+        Promise promise = profile.findPromiseById(id);
+
+        if (promise == null) {
+            return false;
         }
-        // Yangilash muvaffaqiyatli bo'lsa, faylga saqlaymiz.
-        if (updated) {
+
+        // Eski holatni to'liq saqlaymiz.
+        String oldTitle = promise.getTitle();
+        String oldDescription = promise.getDescription();
+        LocalDateTime oldDeadline = promise.getDeadline();
+        PromiseStatus oldStatus = promise.getStatus();
+        PromiseStatus oldPreviousStatus = promise.getStatusBeforeOverdue();
+        PromiseCategory oldCategory = promise.getCategory();
+        Priority oldPriority = promise.getPriority();
+
+        try {
+            boolean updated = profile.updatePromise(
+                    id, newTitle, newDescription, newDeadline, newCategory
+            );
+
+            if (!updated) {
+                return false;
+            }
+
+            // Avval PostgreSQL bazasiga yozamiz.
+            if (!repository.update(promise)) {
+                promise.restoreState(
+                        oldTitle,
+                        oldDescription,
+                        oldDeadline,
+                        oldStatus,
+                        oldPreviousStatus,
+                        oldCategory,
+                        oldPriority
+                );
+                return false;
+            }
+
+            // Baza muvaffaqiyatli yangilangach, faylni saqlaymiz.
             saveToFile();
+            return true;
+
+        } catch (RuntimeException e) {
+            promise.restoreState(
+                    oldTitle,
+                    oldDescription,
+                    oldDeadline,
+                    oldStatus,
+                    oldPreviousStatus,
+                    oldCategory,
+                    oldPriority
+            );
+
+            throw e;
         }
-        // Yangilash natijasini qaytaramiz.
-        return updated;
     }
 
     public boolean startPromise(int id) {
@@ -544,8 +588,10 @@ public class PromiseService {
         profile.loadPromises(loadedPromises);
     }
 
+
     public void loadPromisesFromDatabase() {
-        profile.loadPromises(repository.findAll());
+        List<Promise> loadedPromises = repository.findAll();
+        profile.loadPromises(loadedPromises);
     }
 
     // Profil ichidagi barcha vazifalarni faylga saqlaydi.

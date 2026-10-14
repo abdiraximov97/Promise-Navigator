@@ -5,7 +5,7 @@ import java.time.Clock;
 
 public class Promise {
     private static int nextId = 1;
-    private final int id;
+    private int id;
     private String title;
     private String description;
     private LocalDateTime deadline;
@@ -149,6 +149,16 @@ public class Promise {
         return id;
     }
 
+    public void setId(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException(
+                    "ID musbat son bo'lishi kerak."
+            );
+        }
+
+        this.id = id;
+    }
+
     public String getTitle() {
         return title;
     }
@@ -167,6 +177,28 @@ public class Promise {
 
     public PromiseStatus getStatus() {
         return status;
+    }
+
+    public PromiseStatus getStatusBeforeOverdue() {
+        return statusBeforeOverdue;
+    }
+
+    public void restoreState(
+            String title,
+            String description,
+            LocalDateTime deadline,
+            PromiseStatus status,
+            PromiseStatus previousStatus,
+            PromiseCategory category,
+            Priority priority) {
+
+        this.title = title;
+        this.description = description;
+        this.deadline = deadline;
+        this.status = status;
+        this.statusBeforeOverdue = previousStatus;
+        this.category = category;
+        this.priority = priority;
     }
 
     // Vazifaning ustuvorligini qaytaradi.
@@ -265,6 +297,16 @@ public class Promise {
     // Promise ishlatayotgan Clock asosida hozirgi vaqtni qaytaramiz.
     public static LocalDateTime getCurrentTime() {
         return LocalDateTime.now(clock);
+    }
+
+    public void restoreStatus(PromiseStatus previousStatus) {
+        if (previousStatus == null) {
+            throw new IllegalArgumentException(
+                    "Status null bo'lishi mumkin emas."
+            );
+        }
+
+        this.status = previousStatus;
     }
 
     // Vadani matnli formatda qaytaradi.
