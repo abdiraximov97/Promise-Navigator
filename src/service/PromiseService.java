@@ -183,19 +183,19 @@ public class PromiseService {
         return cancelled;
     }
 
+
     public void chescOverduePromise() {
-
-        // Profil ichidagi barcha va'dalarni aylanib chiqamiz.
         for (Promise promise : profile.getPromises()) {
-
             try {
-                // Har bir va'daning muddatini tekshiramiz.
+                PromiseStatus oldStatus = promise.getStatus();
+
                 promise.checkOverdue();
 
-            } catch (RuntimeException exception) {
+                if (oldStatus != promise.getStatus()) {
+                    repository.update(promise);
+                }
 
-                // Bitta va'dada xato bo'lsa, qolganlarini
-                // tekshirishni davom ettiramiz.
+            } catch (RuntimeException exception) {
                 System.err.println(
                         "Va'da ID " + promise.getId()
                                 + " tekshirilayotganda xatolik: "
@@ -204,6 +204,7 @@ public class PromiseService {
             }
         }
     }
+
 
     public synchronized void startOverdueChecker() {
 

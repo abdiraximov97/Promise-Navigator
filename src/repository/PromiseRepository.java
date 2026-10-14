@@ -61,6 +61,7 @@ public class PromiseRepository {
         }
     }
 
+
     public boolean save(Promise promise) {
         int databaseId = save(
                 promise.getTitle(),
@@ -76,8 +77,37 @@ public class PromiseRepository {
         }
 
         promise.setId(databaseId);
+
+        String sql = "SELECT updated_at FROM promises WHERE id = ?";
+
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, databaseId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    Timestamp updatedTimestamp =
+                            resultSet.getTimestamp("updated_at");
+
+                    if (updatedTimestamp != null) {
+                        promise.setUpdatedAt(
+                                updatedTimestamp.toLocalDateTime()
+                        );
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new IllegalStateException(
+                    "Vazifaning updated_at qiymatini o'qib bo'lmadi: "
+                            + e.getMessage(), e
+            );
+        }
+
         return true;
     }
+
 
     public List<Promise> findAll() {
         String sql = "SELECT id, title, description, deadline, status, "
@@ -107,6 +137,8 @@ public class PromiseRepository {
                     promise.setUpdatedAt(updatedTimestamp.toLocalDateTime());
                 }
 
+                // Vazifa muddati o'tgan bo'lsa, holatini yangilaymiz.
+                promise.checkOverdue();
                 promises.add(promise);
             }
 
@@ -121,11 +153,14 @@ public class PromiseRepository {
     }
 
 
+
     public boolean update(Promise promise) {
-        String sql = "UPDATE promises SET title=?, description=?, deadline=?, status=?, "
-                + "category=?, priority=? WHERE id=?";
+        String sql = "UPDATE promises SET title=?, description=?, deadline=?, "
+                + "status=?, category=?, priority=? WHERE id=?";
+
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
+
             statement.setString(1, promise.getTitle());
             statement.setString(2, promise.getDescription());
             statement.setTimestamp(3, Timestamp.valueOf(promise.getDeadline()));
@@ -133,9 +168,41 @@ public class PromiseRepository {
             statement.setString(5, promise.getCategory().name());
             statement.setString(6, promise.getPriority().name());
             statement.setInt(7, promise.getId());
-            return statement.executeUpdate() > 0;
+
+            int rowsUpdated = statement.executeUpdate();
+
+            if (rowsUpdated > 0) {
+                String selectSql =
+                        "SELECT updated_at FROM promises WHERE id = ?";
+
+                try (PreparedStatement selectStatement =
+                             connection.prepareStatement(selectSql)) {
+
+                    selectStatement.setInt(1, promise.getId());
+
+                    try (ResultSet resultSet =
+                                 selectStatement.executeQuery()) {
+
+                        if (resultSet.next()) {
+                            Timestamp timestamp =
+                                    resultSet.getTimestamp("updated_at");
+
+                            if (timestamp != null) {
+                                promise.setUpdatedAt(
+                                        timestamp.toLocalDateTime()
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            return rowsUpdated > 0;
+
         } catch (SQLException e) {
-            System.out.println("PostgreSQL yangilash xatosi: " + e.getMessage());
+            System.out.println(
+                    "PostgreSQL yangilash xatosi: " + e.getMessage()
+            );
             return false;
         }
     }

@@ -181,7 +181,8 @@ public class Main {
                                 " | " + "Izoh: " + promise.getDescription() +
                                 " | " + "Category: " + promise.getCategory() +
                                 " | " + "Deadline: " + promise.getDeadline() +
-                                " | " + "Status: " + promise.getStatus()
+                                " | " + "Status: " + promise.getStatus() +
+                                " | " + "Oxirgi yangilanish: " + promise.getUpdatedAt()
                 );
             }
         }

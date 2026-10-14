@@ -132,19 +132,14 @@ public class Promise {
                 && deadline.isBefore(LocalDateTime.now(clock));
     }
 
-
     public void checkOverdue() {
-        // Vazifaning muddati o'tganini tekshiramiz.
         if (isOverdue()) {
-
-            // Hozirgi holatni OVERDUE qilishdan oldin saqlaymiz.
-            statusBeforeOverdue = status;
-
-            // Vazifani muddati o'tgan holatiga o'tkazamiz.
-            status = PromiseStatus.OVERDUE;
+            if (status != PromiseStatus.OVERDUE) {
+                statusBeforeOverdue = status;
+                status = PromiseStatus.OVERDUE;
+            }
         }
     }
-
 
     public int getId() {
         return id;
